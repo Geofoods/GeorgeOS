@@ -439,6 +439,12 @@ body::before {
   transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
+.taskbar-app img {
+  width: 30px;
+  height: 30px;
+  display: block;
+}
+
 .taskbar-app:hover {
   transform: translateY(-3px) scale(1.04);
   background: #fff;
@@ -504,6 +510,11 @@ body::before {
   gap: 12px;
 }
 
+.camera-shell h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .weather-status {
   display: grid;
   gap: 6px;
@@ -535,6 +546,72 @@ body::before {
   border-radius: 16px;
   background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
   object-fit: cover;
+}
+
+.camera-preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.camera-preview video {
+  width: 100%;
+  display: block;
+}
+
+.camera-preview canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-status {
+  color: rgba(238, 246, 255, 0.78);
+}
+
+.camera-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.camera-actions button,
+.download-list a {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+}
+
+.download-panel {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.download-panel h3 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.download-list {
+  display: grid;
+  gap: 8px;
+}
+
+.download-list a {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .camera-controls,
@@ -818,6 +895,11 @@ body::before {
     width: 38px;
     height: 38px;
     border-radius: 12px;
+  }
+
+  .taskbar-app img {
+    width: 26px;
+    height: 26px;
   }
 }
 

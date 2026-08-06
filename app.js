@@ -573,12 +573,23 @@ function buildCameraApp(windowElement) {
   const shell = document.createElement('div');
   shell.className = 'camera-shell';
   shell.innerHTML = `
-    <video class="camera-view" autoplay playsinline muted></video>
-    <div class="camera-controls">
+    <h2>Camera</h2>
+    <div class="camera-preview">
+      <video class="camera-view" autoplay playsinline muted></video>
+      <canvas class="camera-canvas" hidden></canvas>
+    </div>
+    <div class="camera-status">Click start to request access to your camera.</div>
+    <div class="camera-actions">
       <button type="button" class="start-camera">Start Camera</button>
       <button type="button" class="stop-camera">Stop Camera</button>
+      <button type="button" class="capture-photo">Take Photo</button>
+      <button type="button" class="record-video">Record Video</button>
+      <button type="button" class="stop-recording" disabled>Stop Recording</button>
     </div>
-    <div class="camera-message">Click start to request access to your camera.</div>
+    <div class="download-panel">
+      <h3>Downloads</h3>
+      <div class="download-list"></div>
+    </div>
   `;
 
   shell.querySelector('.start-camera').addEventListener('click', () => {
@@ -587,13 +598,22 @@ function buildCameraApp(windowElement) {
   shell.querySelector('.stop-camera').addEventListener('click', () => {
     stopCameraApp(windowElement);
   });
+  shell.querySelector('.capture-photo').addEventListener('click', () => {
+    capturePhoto(windowElement);
+  });
+  shell.querySelector('.record-video').addEventListener('click', () => {
+    startRecording(windowElement);
+  });
+  shell.querySelector('.stop-recording').addEventListener('click', () => {
+    stopRecording(windowElement);
+  });
 
   return shell;
 }
 
 async function startCameraApp(windowElement) {
   const video = windowElement.querySelector('.camera-view');
-  const message = windowElement.querySelector('.camera-message');
+  const message = windowElement.querySelector('.camera-status');
   if (!video || !message) {
     return;
   }
@@ -617,13 +637,20 @@ async function startCameraApp(windowElement) {
 
 function stopCameraApp(windowElement) {
   const video = windowElement.querySelector('.camera-view');
-  const message = windowElement.querySelector('.camera-message');
+  const message = windowElement.querySelector('.camera-status');
   const stream = windowElement._cameraStream;
 
   if (stream) {
     stream.getTracks().forEach((track) => track.stop());
     windowElement._cameraStream = null;
   }
+
+  if (windowElement._mediaRecorder && windowElement._mediaRecorder.state !== 'inactive') {
+    windowElement._mediaRecorder.stop();
+  }
+
+  windowElement._mediaRecorder = null;
+  windowElement._recordChunks = [];
 
   if (video) {
     video.srcObject = null;
@@ -632,4 +659,142 @@ function stopCameraApp(windowElement) {
   if (message) {
     message.textContent = 'Camera stopped.';
   }
+
+  updateRecordingButtons(windowElement, false);
+}
+
+function capturePhoto(windowElement) {
+  const video = windowElement.querySelector('.camera-view');
+  const canvas = windowElement.querySelector('.camera-canvas');
+  const message = windowElement.querySelector('.camera-status');
+
+  if (!video || !canvas || !windowElement._cameraStream) {
+    if (message) {
+      message.textContent = 'Start the camera first.';
+    }
+    return;
+  }
+
+  const width = video.videoWidth || 1280;
+  const height = video.videoHeight || 720;
+  canvas.hidden = false;
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext('2d');
+  if (!context) {
+    return;
+  }
+
+  context.drawImage(video, 0, 0, width, height);
+  canvas.toBlob((blob) => {
+    if (!blob) {
+      if (message) {
+        message.textContent = 'Could not capture photo.';
+      }
+      return;
+    }
+
+    const fileName = `georgeos-photo-${Date.now()}.png`;
+    addDownload(windowElement, blob, fileName, 'Photo captured');
+    if (message) {
+      message.textContent = 'Photo captured and ready to download.';
+    }
+  }, 'image/png');
+}
+
+function startRecording(windowElement) {
+  const video = windowElement.querySelector('.camera-view');
+  const message = windowElement.querySelector('.camera-status');
+
+  if (!windowElement._cameraStream || !video) {
+    if (message) {
+      message.textContent = 'Start the camera first.';
+    }
+    return;
+  }
+
+  if (!window.MediaRecorder) {
+    if (message) {
+      message.textContent = 'Video recording is not supported in this browser.';
+    }
+    return;
+  }
+
+  if (windowElement._mediaRecorder && windowElement._mediaRecorder.state === 'recording') {
+    return;
+  }
+
+  const options = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+    ? { mimeType: 'video/webm;codecs=vp9' }
+    : MediaRecorder.isTypeSupported('video/webm')
+      ? { mimeType: 'video/webm' }
+      : {};
+
+  const recorder = new MediaRecorder(windowElement._cameraStream, options);
+  windowElement._recordChunks = [];
+  windowElement._mediaRecorder = recorder;
+  recorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) {
+      windowElement._recordChunks.push(event.data);
+    }
+  };
+  recorder.onstop = () => {
+    const chunks = windowElement._recordChunks || [];
+    if (!chunks.length) {
+      return;
+    }
+
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+    const fileName = `georgeos-video-${Date.now()}.webm`;
+    addDownload(windowElement, blob, fileName, 'Video recorded');
+    if (message) {
+      message.textContent = 'Video recorded and ready to download.';
+    }
+  };
+
+  recorder.start();
+  updateRecordingButtons(windowElement, true);
+  if (message) {
+    message.textContent = 'Recording...';
+  }
+}
+
+function stopRecording(windowElement) {
+  const recorder = windowElement._mediaRecorder;
+  if (!recorder || recorder.state !== 'recording') {
+    return;
+  }
+
+  recorder.stop();
+  updateRecordingButtons(windowElement, false);
+}
+
+function updateRecordingButtons(windowElement, isRecording) {
+  const recordButton = windowElement.querySelector('.record-video');
+  const stopButton = windowElement.querySelector('.stop-recording');
+
+  if (recordButton) {
+    recordButton.disabled = isRecording;
+  }
+  if (stopButton) {
+    stopButton.disabled = !isRecording;
+  }
+}
+
+function addDownload(windowElement, blob, fileName, label) {
+  const list = windowElement.querySelector('.download-list');
+  if (!list) {
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.textContent = `${label} - ${fileName}`;
+  link.addEventListener('click', () => {
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, { once: true });
+  list.prepend(link);
 }
