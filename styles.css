@@ -313,6 +313,248 @@ body::before {
   z-index: 3;
 }
 
+.window-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.app-window {
+  position: absolute;
+  display: none;
+  flex-direction: column;
+  min-width: 280px;
+  min-height: 220px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(18, 24, 35, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(22px) saturate(1.25);
+}
+
+.app-window.open {
+  display: flex;
+}
+
+.app-window.maximized {
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0;
+}
+
+.window-titlebar {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: grab;
+  user-select: none;
+}
+
+.window-titlebar:active {
+  cursor: grabbing;
+}
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.window-control {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+}
+
+.window-control.close {
+  background: #ff5f57;
+}
+
+.window-control.maximize {
+  background: #febc2e;
+}
+
+.window-control.fullscreen {
+  background: #28c840;
+}
+
+.window-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.window-content {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  background: rgba(10, 15, 22, 0.52);
+}
+
+.resize-handle {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 0 40%, rgba(255, 255, 255, 0.45) 40% 50%, transparent 50% 60%, rgba(255, 255, 255, 0.35) 60% 70%, transparent 70%);
+}
+
+.taskbar {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  background: rgba(126, 183, 227, 0.33);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
+  z-index: 8;
+}
+
+.taskbar-app {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #10202e;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.taskbar-app:hover {
+  transform: translateY(-3px) scale(1.04);
+  background: #fff;
+}
+
+.taskbar-app.active {
+  box-shadow: inset 0 0 0 2px rgba(14, 146, 255, 0.9), 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.taskbar-app span {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.app-shell {
+  display: grid;
+  gap: 12px;
+  color: #eef6ff;
+}
+
+.app-shell h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.calculator-display {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  text-align: right;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.calculator-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calculator-grid button {
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 0;
+  font: inherit;
+  font-weight: 700;
+  color: #eef6ff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.calculator-grid button.operator {
+  background: rgba(14, 146, 255, 0.8);
+}
+
+.calculator-grid button.equals {
+  background: rgba(40, 200, 64, 0.85);
+}
+
+.weather-shell,
+.camera-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.weather-status {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.weather-city {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.weather-temp {
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.weather-meta,
+.weather-message,
+.camera-message {
+  color: rgba(238, 246, 255, 0.78);
+}
+
+.camera-view {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
+  object-fit: cover;
+}
+
+.camera-controls,
+.weather-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.camera-controls button,
+.weather-controls button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+}
+
 .widget {
   overflow: hidden;
   border-radius: 18px;
@@ -564,6 +806,18 @@ body::before {
     width: 16px;
     height: 16px;
     border-radius: 5px;
+  }
+
+  .taskbar {
+    bottom: 8px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .taskbar-app {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
   }
 }
 
