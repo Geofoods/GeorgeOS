@@ -14,15 +14,81 @@
   </head>
   <body>
     <main class="scene" aria-label="Welcome screen">
-      <div class="sky"></div>
-      <div class="wave wave-left"></div>
-      <div class="wave wave-center"></div>
-      <div class="wave wave-right"></div>
-      <div class="glass-sheen"></div>
-      <h1 class="hello">hello</h1>
-      <button class="bottom-button" type="button" aria-label="Continue">
-        <span class="arrow">⌄</span>
-      </button>
+      <section class="view welcome-view" aria-label="Welcome screen">
+        <div class="sky"></div>
+        <div class="wave wave-left"></div>
+        <div class="wave wave-center"></div>
+        <div class="wave wave-right"></div>
+        <div class="glass-sheen"></div>
+        <h1 class="hello">hello</h1>
+        <button class="bottom-button" type="button" aria-label="Continue to desktop">
+          <span class="arrow">⌄</span>
+        </button>
+      </section>
+
+      <section class="view desktop-view" aria-label="Desktop screen" hidden>
+        <div class="desktop-shell">
+          <div class="device-frame">
+            <div class="notch"></div>
+            <div class="screen">
+              <div class="desktop-wallpaper"></div>
+              <header class="menu-bar" aria-label="Menu bar">
+                <div class="menu-left">
+                  <span class="apple-logo"></span>
+                  <span>Finder</span>
+                  <span>File</span>
+                  <span>Edit</span>
+                  <span>View</span>
+                  <span>Go</span>
+                  <span>Window</span>
+                  <span>Help</span>
+                </div>
+                <div class="menu-right">
+                  <span>◔</span>
+                  <span>◞</span>
+                  <span>⌕</span>
+                  <span>◉</span>
+                  <span>Tue Apr 1 9:41 AM</span>
+                </div>
+              </header>
+
+              <div class="widgets">
+                <section class="widget calendar-widget">
+                  <div class="widget-label">APRIL</div>
+                  <div class="calendar-grid">
+                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                    <span></span><span></span><span class="today">1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                    <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span>
+                    <span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span>
+                    <span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span>
+                    <span>27</span><span>28</span><span>29</span><span>30</span><span></span><span></span><span></span>
+                  </div>
+                </section>
+
+                <section class="widget weather-widget">
+                  <div class="city">San Francisco</div>
+                  <div class="temp">53°</div>
+                  <div class="weather-state">Partly Cloudy</div>
+                  <div class="range">H:56° L:50°</div>
+                </section>
+
+                <section class="widget photo-widget">
+                  <img src="avatar.svg" alt="Decorative photo tile" />
+                </section>
+              </div>
+
+              <nav class="dock" aria-label="Applications">
+                <span>Finder</span><span>Launchpad</span><span>Safari</span><span>Messages</span><span>Mail</span>
+                <span>Maps</span><span>Photos</span><span>FaceTime</span><span>Calendar</span><span>Contacts</span>
+                <span>Notes</span><span>Reminders</span><span>TV</span><span>Music</span><span>News</span>
+                <span>Pages</span><span>Numbers</span><span>Keynote</span><span>App Store</span><span>Settings</span>
+                <span>Downloads</span><span>Trash</span>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
+    <script src="app.js"></script>
   </body>
 </html>
