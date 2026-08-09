@@ -517,6 +517,95 @@ body::before {
   gap: 12px;
 }
 
+.mail-shell {
+  display: grid;
+  gap: 10px;
+  color: #eef6ff;
+  max-width: 560px;
+}
+
+.mail-to {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(14, 146, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.mail-to-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(238, 246, 255, 0.7);
+}
+
+.mail-to-address {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.mail-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.mail-field span {
+  color: rgba(238, 246, 255, 0.8);
+}
+
+.mail-field input,
+.mail-field textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.09);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.mail-field input:focus,
+.mail-field textarea:focus {
+  outline: 2px solid rgba(14, 146, 255, 0.6);
+  outline-offset: 0;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.mail-send {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 16px;
+  background: rgba(14, 146, 255, 0.9);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.mail-send:hover {
+  transform: translateY(-2px);
+  background: rgba(14, 146, 255, 1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+}
+
+.mail-hint,
+.mail-status {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(238, 246, 255, 0.72);
+}
+
+.mail-status.error {
+  color: #ffb4a8;
+}
+
 .photos-shell {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
