@@ -77,6 +77,14 @@ const appConfigs = {
     height: '360px',
     build: buildCameraApp,
   },
+  mail: {
+    title: 'Mail',
+    x: 'calc(50% - 230px)',
+    y: 'calc(50% - 210px)',
+    width: '460px',
+    height: '440px',
+    build: buildMailApp,
+  },
 };
 
 function showDesktop() {
@@ -914,4 +922,85 @@ function addDownload(windowElement, blob, fileName, label) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, { once: true });
   list.prepend(link);
+}
+
+const mailDestination = 'curious.george71511@gmail.com';
+
+function buildMailApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'mail-shell';
+  shell.innerHTML = `
+    <div class="mail-to">
+      <span class="mail-to-label">To</span>
+      <span class="mail-to-address">${mailDestination}</span>
+    </div>
+    <label class="mail-field">
+      <span>Your name</span>
+      <input type="text" class="mail-name" placeholder="George" maxlength="60" />
+    </label>
+    <label class="mail-field">
+      <span>Subject</span>
+      <input type="text" class="mail-subject" placeholder="What's this about?" maxlength="120" />
+    </label>
+    <label class="mail-field">
+      <span>Message</span>
+      <textarea class="mail-body" rows="6" maxlength="5000" placeholder="Write your message..."></textarea>
+    </label>
+    <button type="button" class="mail-send">Send Message</button>
+    <p class="mail-hint">Sending opens your email app with the message ready to deliver.</p>
+    <p class="mail-status" hidden></p>
+  `;
+
+  const nameInput = shell.querySelector('.mail-name');
+  const subjectInput = shell.querySelector('.mail-subject');
+  const bodyInput = shell.querySelector('.mail-body');
+  const sendButton = shell.querySelector('.mail-send');
+  const status = shell.querySelector('.mail-status');
+
+  function markStatus(message, isError) {
+    status.hidden = false;
+    status.textContent = message;
+    status.classList.toggle('error', isError);
+  }
+
+  sendButton.addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    const subject = subjectInput.value.trim();
+    const body = bodyInput.value.trim();
+
+    if (!name) {
+      markStatus('Please enter your name.', true);
+      nameInput.focus();
+      return;
+    }
+
+    if (!body) {
+      markStatus('Please write a message.', true);
+      bodyInput.focus();
+      return;
+    }
+
+    const lines = [`Hi George,`, ``, `From: ${name}`];
+    if (subject) {
+      lines.unshift(subject);
+    }
+    lines.push(``, body.trim());
+    const mailBody = lines.join('\n');
+
+    const mailtoUrl =
+      `mailto:${mailDestination}` +
+      `?subject=${encodeURIComponent(subject || `Message from ${name}`)}` +
+      `&body=${encodeURIComponent(mailBody)}`;
+
+    const link = document.createElement('a');
+    link.href = mailtoUrl;
+    link.hidden = true;
+    document.body.append(link);
+    link.click();
+    link.remove();
+
+    markStatus('Opening your email app… Check that your message is ready, then hit send. Thank you!');
+  });
+
+  return shell;
 }
