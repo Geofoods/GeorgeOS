@@ -35,6 +35,15 @@ const weatherCodeMap = new Map([
   [99, { label: 'Thunderstorm', icon: '⛈' }],
 ]);
 
+const photoLibrary = [
+  { src: 'IMG_9084.jpg', title: 'Photo 1' },
+  { src: 'IMG_7691.jpg', title: 'Photo 2' },
+  { src: 'IMG_8713.jpg', title: 'Photo 3' },
+  { src: 'IMG_8025.jpg', title: 'Photo 4' },
+  { src: 'IMG_7942.jpg', title: 'Photo 5' },
+  { src: 'IMG_7477.jpg', title: 'Photo 6' },
+];
+
 const appConfigs = {
   calculator: {
     title: 'Calculator',
@@ -43,6 +52,14 @@ const appConfigs = {
     width: '340px',
     height: '420px',
     build: buildCalculatorApp,
+  },
+  photos: {
+    title: 'Photos',
+    x: 'calc(50% - 260px)',
+    y: 'calc(50% - 190px)',
+    width: '520px',
+    height: '420px',
+    build: buildPhotosApp,
   },
   weather: {
     title: 'Weather',
@@ -483,6 +500,48 @@ function buildCalculatorApp(windowElement) {
 
   shell.append(display, grid);
   syncDisplay();
+  return shell;
+}
+
+function buildPhotosApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'photos-shell';
+  const initialPhoto = photoLibrary[0];
+  shell.innerHTML = `
+    <div class="photos-sidebar">
+      <div class="photos-sidebar-title">Library</div>
+      <button type="button" class="photos-album active">All Photos <span>${photoLibrary.length}</span></button>
+    </div>
+    <div class="photos-main">
+      <div class="photos-hero">
+        <img class="photos-image" src="${initialPhoto.src}" alt="Photo" />
+      </div>
+      <div class="photos-grid" aria-label="Photo library"></div>
+    </div>
+  `;
+
+  const heroImage = shell.querySelector('.photos-image');
+  const photoGrid = shell.querySelector('.photos-grid');
+
+  photoLibrary.forEach((photo, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `photos-thumb${index === 0 ? ' active' : ''}`;
+    button.setAttribute('aria-label', `Photo ${index + 1}`);
+    button.innerHTML = `
+      <img src="${photo.src}" alt="Photo" />
+    `;
+
+    button.addEventListener('click', () => {
+      heroImage.src = photo.src;
+      heroImage.alt = 'Photo';
+      shell.querySelectorAll('.photos-thumb').forEach((thumb) => thumb.classList.remove('active'));
+      button.classList.add('active');
+    });
+
+    photoGrid.append(button);
+  });
+
   return shell;
 }
 
