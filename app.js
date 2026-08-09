@@ -1,9 +1,12 @@
 const scene = document.querySelector('.scene');
 const continueButton = document.querySelector('.bottom-button');
 const welcomeView = document.querySelector('.welcome-view');
+const welcomeDateElement = document.querySelector('#welcome-date');
+const welcomeTimeElement = document.querySelector('#welcome-time');
 const desktopView = document.querySelector('.desktop-view');
 const windowLayer = document.querySelector('.window-layer');
 const taskbarButtons = [...document.querySelectorAll('.taskbar-app')];
+const clockElement = document.querySelector('#clock');
 
 const windows = new Map();
 let topZ = 20;
@@ -65,7 +68,28 @@ function showDesktop() {
   desktopView.hidden = false;
 }
 
+function showWelcome() {
+  windows.forEach((windowEntry) => {
+    if (windowEntry.element.dataset.app === 'camera') {
+      stopCameraApp(windowEntry.element);
+    }
+  });
+
+  scene.dataset.view = 'welcome';
+  desktopView.hidden = true;
+  welcomeView.hidden = false;
+}
+
 continueButton.addEventListener('click', showDesktop);
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && scene.dataset.view === 'desktop') {
+    showWelcome();
+  }
+});
+
+updateClock();
+setInterval(updateClock, 1000);
 
 taskbarButtons.forEach((button) => {
   button.addEventListener('click', () => {
@@ -278,6 +302,40 @@ function markTaskbarActive(appId, isActive) {
   }
 
   button.classList.toggle('active', isActive);
+}
+
+function updateClock() {
+  const now = new Date();
+
+  if (clockElement) {
+    clockElement.textContent = new Intl.DateTimeFormat([], {
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(now);
+  }
+
+  if (!welcomeDateElement || !welcomeTimeElement) {
+    return;
+  }
+
+  welcomeDateElement.textContent = new Intl.DateTimeFormat([], {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(now);
+
+  const welcomeTime = new Intl.DateTimeFormat([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+    .formatToParts(now)
+    .filter((part) => part.type !== 'dayPeriod')
+    .map((part) => part.value)
+    .join('')
+    .trim();
+
+  welcomeTimeElement.textContent = welcomeTime;
 }
 
 function buildCalculatorApp(windowElement) {
