@@ -947,7 +947,7 @@ function buildMailApp(windowElement) {
       <textarea class="mail-body" rows="6" maxlength="5000" placeholder="Write your message..."></textarea>
     </label>
     <button type="button" class="mail-send">Send Message</button>
-    <p class="mail-hint">Sending opens your email app with the message ready to deliver.</p>
+    <p class="mail-hint">Your message is delivered straight to curious.george71511@gmail.com by an automated system.</p>
     <p class="mail-status" hidden></p>
   `;
 
@@ -963,7 +963,7 @@ function buildMailApp(windowElement) {
     status.classList.toggle('error', isError);
   }
 
-  sendButton.addEventListener('click', () => {
+  async function sendMessage() {
     const name = nameInput.value.trim();
     const subject = subjectInput.value.trim();
     const body = bodyInput.value.trim();
@@ -980,27 +980,48 @@ function buildMailApp(windowElement) {
       return;
     }
 
-    const lines = [`Hi George,`, ``, `From: ${name}`];
-    if (subject) {
-      lines.unshift(subject);
+    sendButton.disabled = true;
+    sendButton.textContent = 'Sending…';
+    markStatus('Sending your message…');
+
+    const payload = {
+      name,
+      subject: subject || `Message from ${name}`,
+      message: body,
+      _subject: subject || `Mail from ${name} (GeorgeOS)`,
+      _template: 'table',
+    };
+
+    try {
+      const response = await fetch(`https://formsubmit.co/ajax/${mailDestination}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json().catch(() => null);
+      const success = result?.success === 'true' || response.ok;
+
+      if (success) {
+        markStatus('Message sent! Thank you for getting in touch.');
+        nameInput.value = '';
+        subjectInput.value = '';
+        bodyInput.value = '';
+      } else {
+        markStatus(result?.message || 'Could not send the message. Try again shortly.', true);
+      }
+    } catch (error) {
+      markStatus('Network error — your message was not sent. Check your connection and retry.', true);
+    } finally {
+      sendButton.disabled = false;
+      sendButton.textContent = 'Send Message';
     }
-    lines.push(``, body.trim());
-    const mailBody = lines.join('\n');
+  }
 
-    const mailtoUrl =
-      `mailto:${mailDestination}` +
-      `?subject=${encodeURIComponent(subject || `Message from ${name}`)}` +
-      `&body=${encodeURIComponent(mailBody)}`;
-
-    const link = document.createElement('a');
-    link.href = mailtoUrl;
-    link.hidden = true;
-    document.body.append(link);
-    link.click();
-    link.remove();
-
-    markStatus('Opening your email app… Check that your message is ready, then hit send. Thank you!');
-  });
+  sendButton.addEventListener('click', sendMessage);
 
   return shell;
 }
