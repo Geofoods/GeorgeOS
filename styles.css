@@ -80,6 +80,7 @@ body::before {
   display: grid;
   place-items: center;
   overflow: hidden;
+  background: url("IMG_9084.jpg") center center / cover no-repeat;
 }
 
 .sky,
@@ -150,7 +151,6 @@ body::before {
   font-weight: 600;
   letter-spacing: 0.03em;
   color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.32);
 }
 
 .welcome-clock {
@@ -161,7 +161,6 @@ body::before {
   z-index: 2;
   text-align: center;
   color: rgba(255, 255, 255, 0.96);
-  text-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
 }
 
 .welcome-date {
@@ -217,9 +216,6 @@ body::before {
   display: block;
   border-radius: 999px;
   border: 3px solid rgba(255, 255, 255, 0.95);
-  box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.28),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   object-fit: cover;
 }
 
@@ -227,7 +223,6 @@ body::before {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
 }
 
 .unlock-caption {
@@ -244,7 +239,6 @@ body::before {
   background: rgba(173, 210, 240, 0.34);
   border: 1px solid rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(14px);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18);
 }
 
 .desktop-shell {
