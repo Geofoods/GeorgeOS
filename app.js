@@ -547,6 +547,7 @@ function buildPhotosApp(windowElement) {
     <div class="photos-main">
       <div class="photos-hero">
         <img class="photos-image" src="${initialPhoto.src}" alt="Photo" />
+        <button type="button" class="photos-wallpaper-btn">Set as Background</button>
       </div>
       <div class="photos-grid" aria-label="Photo library"></div>
     </div>
@@ -554,6 +555,8 @@ function buildPhotosApp(windowElement) {
 
   const heroImage = shell.querySelector('.photos-image');
   const photoGrid = shell.querySelector('.photos-grid');
+  const wallpaperBtn = shell.querySelector('.photos-wallpaper-btn');
+  const wallpaperElement = document.querySelector('.desktop-wallpaper');
 
   photoLibrary.forEach((photo, index) => {
     const button = document.createElement('button');
@@ -572,6 +575,10 @@ function buildPhotosApp(windowElement) {
     });
 
     photoGrid.append(button);
+  });
+
+  wallpaperBtn.addEventListener('click', () => {
+    wallpaperElement.style.backgroundImage = `url("${heroImage.src}")`;
   });
 
   return shell;

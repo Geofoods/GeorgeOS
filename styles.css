@@ -760,6 +760,27 @@ body::before {
   object-fit: cover;
 }
 
+.photos-wallpaper-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: rgba(14, 146, 255, 0.9);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.photos-wallpaper-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(14, 146, 255, 1);
+}
+
 .photos-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
