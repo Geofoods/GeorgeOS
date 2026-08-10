@@ -93,6 +93,14 @@ const appConfigs = {
     height: '480px',
     build: buildProjectsApp,
   },
+  'holy-moly': {
+    title: 'Holy Moly',
+    x: 'calc(50% - 220px)',
+    y: 'calc(50% - 170px)',
+    width: '440px',
+    height: '340px',
+    build: buildHolyMolyApp,
+  },
 };
 
 function showDesktop() {
