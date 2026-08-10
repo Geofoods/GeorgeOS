@@ -34,7 +34,20 @@
               <div class="desktop-wallpaper"></div>
               <div id="clock" class="desktop-clock" aria-label="Current time">9:41 AM</div>
 
+              <button class="workspace-pill" type="button" aria-label="Open workspaces overview" aria-haspopup="true">
+                <span class="workspace-pill-dots" aria-hidden="true"></span>
+                <span class="workspace-pill-label">1/4</span>
+              </button>
+
               <div class="window-layer" aria-live="polite"></div>
+
+              <div class="overview" hidden aria-label="Workspaces overview" role="dialog" aria-modal="true">
+                <div class="overview-header">
+                  <span class="overview-title">Workspaces</span>
+                  <button type="button" class="overview-close">Done</button>
+                </div>
+                <div class="overview-grid" aria-label="Workspace overview"></div>
+              </div>
 
               <nav class="taskbar" aria-label="Applications">
                 <button class="taskbar-app" type="button" data-app="calculator" aria-label="Open Calculator">
@@ -42,6 +55,9 @@
                 </button>
                 <button class="taskbar-app" type="button" data-app="photos" aria-label="Open Photos">
                   <img src="icons/photos-icon.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="taskbar-app" type="button" data-app="paint" aria-label="Open Paint">
+                  <img src="icons/paint-icon.svg" alt="" aria-hidden="true" />
                 </button>
                 <button class="taskbar-app" type="button" data-app="weather" aria-label="Open Weather">
                   <img src="icons/weather-icon.svg" alt="" aria-hidden="true" />
@@ -60,6 +76,12 @@
                 </button>
                 <button class="taskbar-app" type="button" data-app="linkedin" aria-label="Open LinkedIn">
                   <img src="icons/linkedin-icon.webp" alt="" aria-hidden="true" />
+                </button>
+                <button class="taskbar-app" type="button" data-app="youtube" aria-label="Open YouTube">
+                  <img src="icons/youtube-icon.png" alt="" aria-hidden="true" />
+                </button>
+                <button class="taskbar-app" type="button" data-app="instagram" aria-label="Open Instagram">
+                  <img src="https://th.bing.com/th/id/R.26d9974a1feec9905a4e0d5e5ddf8db6?rik=Og1ujXM2C1AJHQ&riu=http%3a%2f%2fupload.wikimedia.org%2fwikipedia%2fcommons%2fa%2fa5%2fInstagram_icon.png&ehk=1%2fZWXYn2nN%2fR80TOtcKH5SsdLkkUvMLrB%2fHUXRDHk9I%3d&risl=&pid=ImgRaw&r=0" alt="" aria-hidden="true" />
                 </button>
                 <button class="taskbar-app" type="button" data-app="system-breach" aria-label="Open System Breach">
                   <img src="icons/system-breach-icon.png" alt="" aria-hidden="true" />

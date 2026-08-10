@@ -7,9 +7,21 @@ const desktopView = document.querySelector('.desktop-view');
 const windowLayer = document.querySelector('.window-layer');
 const taskbarButtons = [...document.querySelectorAll('.taskbar-app')];
 const clockElement = document.querySelector('#clock');
+const overviewElement = document.querySelector('.overview');
+const overviewGrid = document.querySelector('.overview-grid');
+const overviewCloseButton = document.querySelector('.overview-close');
+const workspacePill = document.querySelector('.workspace-pill');
+const workspacePillDots = document.querySelector('.workspace-pill-dots');
+const workspacePillLabel = document.querySelector('.workspace-pill-label');
+const desktopWallpaperElement = document.querySelector('.desktop-wallpaper');
+
+const WORKSPACE_COUNT = 4;
+const WORKSPACE_COLUMNS = 2;
 
 const windows = new Map();
 let topZ = 20;
+let currentWorkspace = 0;
+let overviewOpen = false;
 
 const weatherCodeMap = new Map([
   [0, { label: 'Clear', icon: '☀' }],
@@ -44,6 +56,8 @@ const photoLibrary = [
   { src: 'IMG_7477.jpg', title: 'Photo 6' },
 ];
 
+const capturedPhotos = [];
+
 const appConfigs = {
   calculator: {
     title: 'Calculator',
@@ -60,6 +74,14 @@ const appConfigs = {
     width: '520px',
     height: '420px',
     build: buildPhotosApp,
+  },
+  paint: {
+    title: 'Paint',
+    x: 'calc(50% - 280px)',
+    y: 'calc(50% - 210px)',
+    width: '560px',
+    height: '460px',
+    build: buildPaintApp,
   },
   weather: {
     title: 'Weather',
@@ -109,6 +131,22 @@ const appConfigs = {
     height: '340px',
     build: buildLinkedinApp,
   },
+  youtube: {
+    title: 'YouTube',
+    x: 'calc(50% - 220px)',
+    y: 'calc(50% - 170px)',
+    width: '440px',
+    height: '340px',
+    build: buildYoutubeApp,
+  },
+  instagram: {
+    title: 'Instagram',
+    x: 'calc(50% - 220px)',
+    y: 'calc(50% - 170px)',
+    width: '440px',
+    height: '340px',
+    build: buildInstagramApp,
+  },
   'system-breach': {
     title: 'System Breach',
     x: 'calc(50% - 220px)',
@@ -141,9 +179,62 @@ continueButton.addEventListener('click', showDesktop);
 
 window.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && scene.dataset.view === 'desktop') {
-    showWelcome();
+    if (overviewOpen) {
+      closeOverview();
+    } else {
+      showWelcome();
+    }
+    return;
+  }
+
+  if (isWorkspaceShortcut(event)) {
+    event.preventDefault();
+    const target = workspaceForShortcut(event.key);
+    if (event.key === 'Meta' || event.key === 'F2') {
+      toggleOverview();
+    } else {
+      if (overviewOpen) {
+        closeOverview();
+      }
+      switchWorkspace(target);
+    }
   }
 });
+
+function isWorkspaceShortcut(event) {
+  const isModifier = event.ctrlKey && event.altKey;
+  if (isModifier) {
+    return ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '1', '2', '3', '4'].includes(event.key);
+  }
+  return event.key === 'Meta' || event.key === 'F2';
+}
+
+function workspaceForShortcut(key) {
+  if (key === 'Meta' || key === 'F2') {
+    return -1;
+  }
+
+  if (key === '1' || key === '2' || key === '3' || key === '4') {
+    return Number(key) - 1;
+  }
+
+  const rows = Math.ceil(WORKSPACE_COUNT / WORKSPACE_COLUMNS);
+  const row = Math.floor(currentWorkspace / WORKSPACE_COLUMNS);
+  const col = currentWorkspace % WORKSPACE_COLUMNS;
+
+  switch (key) {
+    case 'ArrowUp':
+      return (row - 1 + rows) % rows * WORKSPACE_COLUMNS + col;
+    case 'ArrowDown':
+      return (row + 1) % rows * WORKSPACE_COLUMNS + col;
+    case 'ArrowLeft':
+      return row * WORKSPACE_COLUMNS + (col - 1 + WORKSPACE_COLUMNS) % WORKSPACE_COLUMNS;
+    case 'ArrowRight':
+      return row * WORKSPACE_COLUMNS + (col + 1) % WORKSPACE_COLUMNS;
+    default:
+      return -1;
+  }
+}
 
 updateClock();
 setInterval(updateClock, 1000);
@@ -154,6 +245,20 @@ taskbarButtons.forEach((button) => {
     openApp(button.dataset.app);
   });
 });
+
+workspacePill.addEventListener('click', () => {
+  showDesktop();
+  toggleOverview();
+});
+
+overviewCloseButton.addEventListener('click', closeOverview);
+
+for (let index = 0; index < WORKSPACE_COUNT; index += 1) {
+  const dot = document.createElement('span');
+  workspacePillDots.append(dot);
+}
+
+syncWorkspaceUI();
 
 function openApp(appId) {
   const config = appConfigs[appId];
@@ -171,20 +276,35 @@ function openApp(appId) {
     windows.set(appId, windowEntry);
   }
 
+  const element = windowEntry.element;
   showDesktop();
-  windowEntry.element.hidden = false;
-  windowEntry.element.classList.add('open');
-  windowEntry.element.dataset.state = 'windowed';
-  restoreWindowState(windowEntry.element, config);
-  focusWindow(windowEntry.element);
+
+  if (element.dataset.state === 'closed' || !element.dataset.state) {
+    element.dataset.workspace = String(currentWorkspace);
+    element.classList.add('open');
+    element.dataset.state = 'windowed';
+    restoreWindowState(element, config);
+  }
+
+  const windowWorkspace = Number(element.dataset.workspace) || 0;
+  if (overviewOpen) {
+    closeOverview();
+  }
+  if (windowWorkspace !== currentWorkspace) {
+    switchWorkspace(windowWorkspace);
+  } else {
+    updateWindowVisibility();
+  }
+
+  focusWindow(element);
   markTaskbarActive(appId, true);
 
   if (appId === 'weather') {
-    loadWeatherApp(windowEntry.element);
+    loadWeatherApp(element);
   }
 
   if (appId === 'camera') {
-    startCameraApp(windowEntry.element);
+    startCameraApp(element);
   }
 }
 
@@ -241,11 +361,11 @@ function focusWindow(element) {
 
 function closeWindow(element) {
   const appId = element.dataset.app;
-  element.classList.remove('open');
-  element.hidden = true;
   element.dataset.state = 'closed';
+  element.hidden = true;
   markTaskbarActive(appId, false);
   stopCameraApp(element);
+  updateWindowVisibility();
 }
 
 function restoreWindowState(element, config) {
@@ -359,6 +479,244 @@ function markTaskbarActive(appId, isActive) {
   }
 
   button.classList.toggle('active', isActive);
+}
+
+function updateWindowVisibility() {
+  windows.forEach(({ element }) => {
+    const isOpen = element.dataset.state !== 'closed';
+    const isHere = Number(element.dataset.workspace) === currentWorkspace;
+    if (isOpen && isHere) {
+      element.hidden = false;
+      element.classList.add('open');
+    } else {
+      element.hidden = true;
+      element.classList.remove('open');
+    }
+  });
+}
+
+function switchWorkspace(nextWorkspace) {
+  const from = currentWorkspace;
+  const target = Math.max(0, Math.min(WORKSPACE_COUNT - 1, nextWorkspace));
+  if (target === from) {
+    return;
+  }
+
+  currentWorkspace = target;
+  updateWindowVisibility();
+  animateWorkspaceSlide(from, target);
+  syncWorkspaceUI();
+}
+
+function animateWorkspaceSlide(from, to) {
+  const fromRow = Math.floor(from / WORKSPACE_COLUMNS);
+  const fromCol = from % WORKSPACE_COLUMNS;
+  const toRow = Math.floor(to / WORKSPACE_COLUMNS);
+  const toCol = to % WORKSPACE_COLUMNS;
+  const horizontal = toCol !== fromCol;
+  const distance = horizontal ? 54 : 38;
+  const offset = horizontal
+    ? (toCol - fromCol > 0 ? distance : -distance)
+    : (toRow - fromRow > 0 ? distance : -distance);
+
+  windowLayer.style.transition = 'none';
+  windowLayer.style.transform = `translate3d(${horizontal ? offset : 0}px, ${horizontal ? 0 : offset}px, 0)`;
+  windowLayer.getBoundingClientRect();
+  windowLayer.style.transition = 'transform 300ms cubic-bezier(0.16, 0.84, 0.28, 1)';
+  windowLayer.style.transform = 'translate3d(0, 0, 0)';
+
+  window.clearTimeout(windowLayer._slideTimer);
+  windowLayer._slideTimer = window.setTimeout(() => {
+    windowLayer.style.transition = '';
+  }, 320);
+}
+
+function syncWorkspaceUI() {
+  workspacePillLabel.textContent = `${currentWorkspace + 1}/${WORKSPACE_COUNT}`;
+  workspacePillDots.querySelectorAll('span').forEach((dot, index) => {
+    dot.classList.toggle('active', index === currentWorkspace);
+  });
+}
+
+function toggleOverview() {
+  if (overviewOpen) {
+    closeOverview();
+  } else {
+    openOverview();
+  }
+}
+
+function openOverview() {
+  overviewOpen = true;
+  overviewElement.hidden = false;
+  renderOverview();
+}
+
+function closeOverview() {
+  overviewOpen = false;
+  overviewElement.hidden = true;
+  overviewGrid.textContent = '';
+}
+
+function getScreenSize() {
+  const screen = desktopView.querySelector('.screen');
+  const rect = screen.getBoundingClientRect();
+  return { width: rect.width, height: rect.height };
+}
+
+function renderOverview() {
+  overviewGrid.textContent = '';
+  const { width: screenWidth, height: screenHeight } = getScreenSize();
+
+  for (let index = 0; index < WORKSPACE_COUNT; index += 1) {
+    const cell = document.createElement('div');
+    cell.className = `workspace-cell${index === currentWorkspace ? ' current' : ''}`;
+    cell.dataset.workspace = String(index);
+    cell.setAttribute('aria-label', `Desktop ${index + 1}`);
+    cell.tabIndex = 0;
+
+    const preview = document.createElement('div');
+    preview.className = 'workspace-preview';
+
+    const inner = document.createElement('div');
+    inner.className = 'workspace-preview-inner';
+    inner.style.width = `${screenWidth}px`;
+    inner.style.height = `${screenHeight}px`;
+    inner.style.transform = `scale(var(--preview-scale, 1))`;
+    preview.style.setProperty('--preview-scale', '1');
+
+    const wallpaper = document.createElement('div');
+    wallpaper.className = 'workspace-preview-wallpaper';
+    const wallpaperSrc = desktopWallpaperElement.style.backgroundImage || 'url("IMG_9084.jpg")';
+    wallpaper.style.backgroundImage = wallpaperSrc;
+    inner.append(wallpaper);
+
+    windows.forEach(({ element }) => {
+      if (element.dataset.state === 'closed' || Number(element.dataset.workspace) !== index) {
+        return;
+      }
+      inner.append(buildPreviewWindow(element));
+    });
+
+    const name = document.createElement('div');
+    name.className = 'workspace-cell-name';
+    name.textContent = `Desktop ${index + 1}`;
+
+    preview.append(inner);
+    cell.append(preview, name);
+    cell.addEventListener('click', () => selectWorkspaceFromOverview(index));
+    overviewGrid.append(cell);
+
+    window.requestAnimationFrame(() => {
+      const cellRect = cell.getBoundingClientRect();
+      const availWidth = cellRect.width;
+      const availHeight = Math.max(40, cellRect.height - 34);
+      const scale = Math.min(availWidth / screenWidth, availHeight / screenHeight, 1);
+      inner.style.transform = `scale(${scale})`;
+      preview.style.width = `${screenWidth * scale}px`;
+      preview.style.height = `${screenHeight * scale}px`;
+    });
+  }
+}
+
+function buildPreviewWindow(element) {
+  const clone = element.cloneNode(true);
+  clone.classList.add('preview-window');
+  clone.classList.remove('open', 'maximized');
+  clone.dataset.state = 'preview';
+
+  const titlebar = clone.querySelector('.window-titlebar');
+  if (titlebar) {
+    titlebar.classList.add('preview-window-titlebar');
+    titlebar.style.cursor = 'grab';
+  }
+
+  const content = clone.querySelector('.window-content');
+  if (content) {
+    content.classList.add('preview-window-body');
+  }
+
+  const resizeHandle = clone.querySelector('.resize-handle');
+  if (resizeHandle) {
+    resizeHandle.remove();
+  }
+
+  const appId = clone.dataset.app;
+  clone.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    beginPreviewDrag(event, clone, Number(element.dataset.workspace), appId, element);
+  });
+
+  return clone;
+}
+
+function beginPreviewDrag(event, previewWindow, sourceWorkspace, appId, realElement) {
+  previewWindow.classList.add('dragging');
+  const startX = event.clientX;
+  const startY = event.clientY;
+  const startedFromWorkspace = sourceWorkspace;
+  let moved = false;
+  let dropTarget = null;
+
+  const onMove = (moveEvent) => {
+    if (!moved && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) > 8) {
+      moved = true;
+    }
+
+    const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest('.workspace-cell');
+    const nextTarget = target && Number(target.dataset.workspace) !== startedFromWorkspace ? target : null;
+    if (nextTarget !== dropTarget) {
+      if (dropTarget) {
+        dropTarget.classList.remove('drop-target');
+      }
+      dropTarget = nextTarget;
+      if (dropTarget) {
+        dropTarget.classList.add('drop-target');
+      }
+    }
+  };
+
+  const onUp = (upEvent) => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    previewWindow.classList.remove('dragging');
+
+    const target = document.elementFromPoint(upEvent.clientX, upEvent.clientY)?.closest('.workspace-cell');
+
+    if (dropTarget) {
+      dropTarget.classList.remove('drop-target');
+    }
+
+    if (moved && target && Number(target.dataset.workspace) !== startedFromWorkspace) {
+      moveWindowToWorkspace(appId, Number(target.dataset.workspace));
+      renderOverview();
+      return;
+    }
+
+    if (!moved) {
+      selectWorkspaceFromOverview(startedFromWorkspace, true);
+      focusWindow(realElement);
+    }
+  };
+
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp, { once: true });
+}
+
+function moveWindowToWorkspace(appId, workspace) {
+  const entry = windows.get(appId);
+  if (!entry) {
+    return;
+  }
+  entry.element.dataset.workspace = String(workspace);
+  if (!overviewOpen) {
+    updateWindowVisibility();
+  }
+}
+
+function selectWorkspaceFromOverview(workspace, focusWindow = false) {
+  closeOverview();
+  switchWorkspace(workspace);
 }
 
 function updateClock() {
@@ -588,6 +946,232 @@ function buildPhotosApp(windowElement) {
   wallpaperBtn.addEventListener('click', () => {
     wallpaperElement.style.backgroundImage = `url("${heroImage.src}")`;
   });
+
+  return shell;
+}
+
+function buildPaintApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'paint-shell';
+  shell.innerHTML = `
+    <div class="paint-toolbar">
+      <label class="paint-field">
+        <span class="paint-field-label">Color</span>
+        <input type="color" class="paint-color" value="#ff5f57" aria-label="Brush color" />
+      </label>
+      <label class="paint-field">
+        <span class="paint-field-label">Size</span>
+        <input type="range" class="paint-size" min="1" max="40" value="8" aria-label="Brush size" />
+      </label>
+      <button type="button" class="paint-tool paint-brush active">Brush</button>
+      <button type="button" class="paint-tool paint-eraser">Eraser</button>
+      <button type="button" class="paint-tool paint-clear">Clear</button>
+      <button type="button" class="paint-save">Save</button>
+    </div>
+    <div class="paint-body">
+      <div class="paint-gallery">
+        <p class="paint-gallery-title">Photos</p>
+        <div class="paint-sources">Loading photos…</div>
+      </div>
+      <div class="paint-stage">
+        <canvas class="paint-canvas-back"></canvas>
+        <canvas class="paint-canvas"></canvas>
+        <p class="paint-empty">Pick a photo from the library to start painting.</p>
+      </div>
+    </div>
+  `;
+
+  const gallery = shell.querySelector('.paint-sources');
+  const stage = shell.querySelector('.paint-stage');
+  const backCanvas = shell.querySelector('.paint-canvas-back');
+  const foreCanvas = shell.querySelector('.paint-canvas');
+  const emptyNote = shell.querySelector('.paint-empty');
+  const colorInput = shell.querySelector('.paint-color');
+  const sizeInput = shell.querySelector('.paint-size');
+  const brushButton = shell.querySelector('.paint-brush');
+  const eraserButton = shell.querySelector('.paint-eraser');
+  const clearButton = shell.querySelector('.paint-clear');
+  const saveButton = shell.querySelector('.paint-save');
+
+  const backContext = backCanvas.getContext('2d');
+  const foreContext = foreCanvas.getContext('2d');
+  let isEraser = false;
+  let painting = false;
+  let lastPoint = null;
+  let activeThumb = null;
+
+  function resizeCanvas(canvas, context) {
+    const rect = stage.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.floor(rect.width * dpr));
+    const height = Math.max(1, Math.floor(rect.height * dpr));
+    if (canvas.width !== width || canvas.height !== height) {
+      const snapshot = context.getImageData ? context.getImageData(0, 0, canvas.width, canvas.height) : null;
+      canvas.width = width;
+      canvas.height = height;
+      if (snapshot && snapshot.width > 0) {
+        context.putImageData(snapshot, 0, 0);
+      }
+    }
+    return { width, height };
+  }
+
+  function drawCover(context, image, width, height) {
+    const scale = Math.max(width / image.width, height / image.height);
+    const drawWidth = image.width * scale;
+    const drawHeight = image.height * scale;
+    const x = (width - drawWidth) / 2;
+    const y = (height - drawHeight) / 2;
+    context.drawImage(image, x, y, drawWidth, drawHeight);
+  }
+
+  function drawSource(src) {
+    const image = new Image();
+    image.onload = () => {
+      const { width, height } = resizeCanvas(backCanvas, backContext);
+      resizeCanvas(foreCanvas, foreContext);
+      backContext.clearRect(0, 0, backCanvas.width, backCanvas.height);
+      drawCover(backContext, image, width, height);
+      foreContext.clearRect(0, 0, foreCanvas.width, foreCanvas.height);
+      emptyNote.hidden = true;
+      stage.hidden = false;
+    };
+    image.onerror = () => {
+      emptyNote.textContent = 'Could not load that photo.';
+      emptyNote.hidden = false;
+    };
+    image.src = src;
+  }
+
+  function sourceImage(photo, index) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `paint-source${index === 0 ? ' active' : ''}`;
+    button.setAttribute('aria-label', photo.title);
+    button.innerHTML = `<img src="${photo.src}" alt="${photo.title}" />`;
+    button.addEventListener('click', () => {
+      if (activeThumb) {
+        activeThumb.classList.remove('active');
+      }
+      button.classList.add('active');
+      activeThumb = button;
+      drawSource(photo.src);
+    });
+    return button;
+  }
+
+  function renderGallery() {
+    gallery.textContent = '';
+    const allPhotos = [...photoLibrary, ...capturedPhotos];
+    if (!allPhotos.length) {
+      gallery.textContent = 'No photos yet.';
+      return;
+    }
+    allPhotos.forEach((photo, index) => {
+      gallery.append(sourceImage(photo, index));
+    });
+  }
+
+  brushButton.addEventListener('click', () => {
+    isEraser = false;
+    brushButton.classList.add('active');
+    eraserButton.classList.remove('active');
+  });
+
+  eraserButton.addEventListener('click', () => {
+    isEraser = true;
+    eraserButton.classList.add('active');
+    brushButton.classList.remove('active');
+  });
+
+  clearButton.addEventListener('click', () => {
+    foreContext.clearRect(0, 0, foreCanvas.width, foreCanvas.height);
+  });
+
+  saveButton.addEventListener('click', () => {
+    if (emptyNote.hidden === false) {
+      return;
+    }
+    const combined = document.createElement('canvas');
+    combined.width = backCanvas.width;
+    combined.height = backCanvas.height;
+    const context = combined.getContext('2d');
+    context.drawImage(backCanvas, 0, 0);
+    context.drawImage(foreCanvas, 0, 0);
+    combined.toBlob((blob) => {
+      if (!blob) {
+        return;
+      }
+      const fileName = `georgeos-painting-${Date.now()}.png`;
+      addDownload(windowElement, blob, fileName, 'Painting saved');
+    }, 'image/png');
+  });
+
+  function pointFromEvent(event) {
+    const rect = foreCanvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * foreCanvas.width,
+      y: ((event.clientY - rect.top) / rect.height) * foreCanvas.height,
+    };
+  }
+
+  function strokeTo(point) {
+    foreContext.lineCap = 'round';
+    foreContext.lineJoin = 'round';
+    foreContext.strokeStyle = isEraser ? 'rgba(0, 0, 0, 1)' : colorInput.value;
+    foreContext.lineWidth = Number(sizeInput.value) * (foreCanvas.width / rectWidthFactor());
+    foreContext.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+
+    const { x, y } = point;
+    if (lastPoint) {
+      foreContext.beginPath();
+      foreContext.moveTo(lastPoint.x, lastPoint.y);
+      foreContext.lineTo(x, y);
+      foreContext.stroke();
+    } else {
+      foreContext.beginPath();
+      foreContext.arc(x, y, foreContext.lineWidth / 2, 0, Math.PI * 2);
+      foreContext.fillStyle = foreContext.strokeStyle;
+      foreContext.fill();
+    }
+    lastPoint = point;
+  }
+
+  function rectWidthFactor() {
+    return foreCanvas.getBoundingClientRect().width;
+  }
+
+  foreCanvas.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    painting = true;
+    lastPoint = null;
+    strokeTo(pointFromEvent(event));
+    foreCanvas.setPointerCapture(event.pointerId);
+  });
+
+  foreCanvas.addEventListener('pointermove', (event) => {
+    if (!painting) {
+      return;
+    }
+    event.preventDefault();
+    strokeTo(pointFromEvent(event));
+  });
+
+  foreCanvas.addEventListener('pointerup', (event) => {
+    painting = false;
+    lastPoint = null;
+  });
+
+  foreCanvas.addEventListener('pointercancel', () => {
+    painting = false;
+    lastPoint = null;
+  });
+
+  renderGallery();
+  const initialPhoto = [...photoLibrary, ...capturedPhotos][0];
+  if (initialPhoto) {
+    drawSource(initialPhoto.src);
+  }
 
   return shell;
 }
@@ -861,6 +1445,7 @@ function capturePhoto(windowElement) {
 
     const fileName = `georgeos-photo-${Date.now()}.png`;
     addDownload(windowElement, blob, fileName, 'Photo captured');
+    capturedPhotos.push({ src: URL.createObjectURL(blob), title: `Captured ${capturedPhotos.length + 1}` });
     if (message) {
       message.textContent = 'Photo captured and ready to download.';
     }
@@ -1113,7 +1698,7 @@ function buildLinkedinApp(windowElement) {
     <img class="linkedin-banner" src="icons/linkedin-icon.webp" alt="" aria-hidden="true" />
     <h2>LinkedIn</h2>
     <p class="linkedin-description">
-      George Sun's LinkedIn profile — click below to open it in a new tab.
+      My LinkedIn
     </p>
     <button type="button" class="linkedin-launch">Open LinkedIn</button>
   `;
@@ -1136,6 +1721,72 @@ function launchLinkedin(windowElement) {
   const status = windowElement.querySelector('.linkedin-description');
   if (status) {
     status.textContent = 'LinkedIn opened in a new tab.';
+  }
+}
+
+const youtubeUrl = 'https://www.youtube.com/@GeorgesAttireOfficial';
+let youtubeOpenedOnce = false;
+
+function buildYoutubeApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'youtube-shell';
+  shell.innerHTML = `
+    <img class="youtube-banner" src="icons/youtube-icon.png" alt="" aria-hidden="true" />
+    <h2>YouTube</h2>
+    <p class="youtube-description">
+      Georges Attire Official — click below to open it in a new tab.
+    </p>
+    <button type="button" class="youtube-launch">Open YouTube</button>
+  `;
+
+  shell.querySelector('.youtube-launch').addEventListener('click', () => {
+    launchYoutube(windowElement);
+  });
+
+  if (!youtubeOpenedOnce) {
+    youtubeOpenedOnce = true;
+    setTimeout(() => launchYoutube(windowElement), 300);
+  }
+
+  return shell;
+}
+
+function launchYoutube(windowElement) {
+  window.open(youtubeUrl, '_blank', 'noopener,noreferrer');
+
+  const status = windowElement.querySelector('.youtube-description');
+  if (status) {
+    status.textContent = 'YouTube opened in a new tab.';
+  }
+}
+
+const instagramUrl = 'https://www.instagram.com/georgesunreal/';
+
+function buildInstagramApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'instagram-shell';
+  shell.innerHTML = `
+    <img class="instagram-banner" src="https://th.bing.com/th/id/R.26d9974a1feec9905a4e0d5e5ddf8db6?rik=Og1ujXM2C1AJHQ&riu=http%3a%2f%2fupload.wikimedia.org%2fwikipedia%2fcommons%2fa%2fa5%2fInstagram_icon.png&ehk=1%2fZWXYn2nN%2fR80TOtcKH5SsdLkkUvMLrB%2fHUXRDHk9I%3d&risl=&pid=ImgRaw&r=0" alt="" aria-hidden="true" />
+    <h2>Instagram</h2>
+    <p class="instagram-description">
+      @georgesunreal
+    </p>
+    <button type="button" class="instagram-launch">Open Instagram</button>
+  `;
+
+  shell.querySelector('.instagram-launch').addEventListener('click', () => {
+    launchInstagram(windowElement);
+  });
+
+  return shell;
+}
+
+function launchInstagram(windowElement) {
+  window.open(instagramUrl, '_blank', 'noopener,noreferrer');
+
+  const status = windowElement.querySelector('.instagram-description');
+  if (status) {
+    status.textContent = 'Instagram opened in a new tab.';
   }
 }
 
