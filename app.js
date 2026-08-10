@@ -1731,7 +1731,7 @@ function buildYoutubeApp(windowElement) {
   const shell = document.createElement('div');
   shell.className = 'youtube-shell';
   shell.innerHTML = `
-    <img class="youtube-banner" src="icons/youtube-icon.png" alt="" aria-hidden="true" />
+    <img class="youtube-banner" src="icons/R (5).png" alt="" aria-hidden="true" />
     <h2>YouTube</h2>
     <p class="youtube-description">
       Georges Attire Official — click below to open it in a new tab.
