@@ -2,7 +2,7 @@
 
 My own browser operating system that contains many different apps and customization features that includes my socials
 
-## ✨ Features
+## Features
 
 - **Lock screen** — Time and enter button to enter into the desktop 
 - **Window manager** — draggable, resizable, focusable, closable apps with titlebars and fullscreen support
