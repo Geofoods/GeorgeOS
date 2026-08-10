@@ -85,6 +85,14 @@ const appConfigs = {
     height: '440px',
     build: buildMailApp,
   },
+  projects: {
+    title: 'Projects',
+    x: 'calc(50% - 250px)',
+    y: 'calc(50% - 220px)',
+    width: '500px',
+    height: '480px',
+    build: buildProjectsApp,
+  },
 };
 
 function showDesktop() {
@@ -1023,5 +1031,88 @@ function buildMailApp(windowElement) {
 
   sendButton.addEventListener('click', sendMessage);
 
+  return shell;
+}
+
+const githubUser = 'Geofoods';
+
+function buildProjectsApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'projects-shell';
+  shell.innerHTML = `
+    <div class="projects-header">
+      <div class="projects-profile">
+        <img class="projects-avatar" alt="User avatar" />
+        <div>
+          <h2 class="projects-name">@Geofoods</h2>
+          <p class="projects-sub">GitHub repositories</p>
+        </div>
+      </div>
+      <button type="button" class="projects-refresh">Refresh</button>
+    </div>
+    <div class="projects-status">Loading repositories…</div>
+    <div class="projects-list"></div>
+  `;
+
+  const avatarImg = shell.querySelector('.projects-avatar');
+  const statusNode = shell.querySelector('.projects-status');
+  const listNode = shell.querySelector('.projects-list');
+
+  function renderList(repos) {
+    listNode.textContent = '';
+    repos.forEach((repo) => {
+      const item = document.createElement('a');
+      item.className = 'projects-item';
+      item.href = repo.html_url;
+      item.target = '_blank';
+      item.rel = 'noopener noreferrer';
+
+      const meta = [
+        repo.language,
+        repo.stargazers_count > 0 ? `★ ${repo.stargazers_count}` : '',
+        repo.forks_count > 0 ? `⑂ ${repo.forks_count}` : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+      item.innerHTML = `
+        <div class="projects-item-top">
+          <span class="projects-item-name">${repo.name}</span>
+          ${repo.fork ? '<span class="projects-fork">fork</span>' : ''}
+        </div>
+        <p class="projects-item-desc">${repo.description || 'No description provided.'}</p>
+        ${meta ? `<div class="projects-item-meta">${meta}</div>` : ''}
+      `;
+
+      listNode.append(item);
+    });
+  }
+
+  async function loadProjects() {
+    statusNode.hidden = false;
+    statusNode.textContent = 'Loading repositories…';
+    listNode.textContent = '';
+
+    try {
+      const response = await fetch(`https://api.github.com/users/${githubUser}/repos?sort=updated&per_page=100`);
+      if (response.status === 404) {
+        throw new Error('User not found on GitHub.');
+      }
+      if (!response.ok) {
+        throw new Error('Could not load repositories.');
+      }
+
+      const repos = await response.json();
+      avatarImg.src = repos[0]?.owner?.avatar_url || 'avatar.svg';
+      renderList(repos);
+      statusNode.hidden = true;
+    } catch (error) {
+      statusNode.textContent = error?.message || 'Could not load repositories.';
+    }
+  }
+
+  shell.querySelector('.projects-refresh').addEventListener('click', loadProjects);
+
+  loadProjects();
   return shell;
 }
