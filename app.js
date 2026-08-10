@@ -1662,7 +1662,7 @@ function buildHolyMolyApp(windowElement) {
     <img class="holymoly-banner" src="icons/holy-moly-icon.png" alt="" aria-hidden="true" />
     <h2>Holy Moly</h2>
     <p class="holymoly-description">
-      An itch.io game — Holy Moly! Click below to play it in a new tab.
+      A game made by me for the Pixel Forge Game Jam
     </p>
     <button type="button" class="holymoly-launch">Play Holy Moly</button>
   `;
@@ -1879,7 +1879,7 @@ function buildSystemBreachApp(windowElement) {
   shell.innerHTML = `
     <img class="breach-icon" src="icons/system-breach-icon.png" alt="" aria-hidden="true" />
     <h2 class="breach-title">System Breach</h2>
-    <p class="breach-desc">An itch.io game — Holy Moly! Click below to play it in a new tab.</p>
+    <p class="breach-desc">A game made by me for the Pixel Forge Game Jam</p>
     <button type="button" class="breach-launch">Play System Breach</button>
     <p class="breach-hint">Opens the game page in a new tab.</p>
   `;
