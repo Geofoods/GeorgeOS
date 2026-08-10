@@ -1879,7 +1879,7 @@ function buildSystemBreachApp(windowElement) {
   shell.innerHTML = `
     <img class="breach-icon" src="icons/system-breach-icon.png" alt="" aria-hidden="true" />
     <h2 class="breach-title">System Breach</h2>
-    <p class="breach-desc">A game by georgecodes. Launch it on itch.io to play.</p>
+    <p class="breach-desc">An itch.io game — Holy Moly! Click below to play it in a new tab.</p>
     <button type="button" class="breach-launch">Play System Breach</button>
     <p class="breach-hint">Opens the game page in a new tab.</p>
   `;
