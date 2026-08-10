@@ -20,6 +20,39 @@ const WORKSPACE_COLUMNS = 2;
 
 const windows = new Map();
 let topZ = 20;
+
+const themeOptions = [
+  { id: 'macos', label: 'macOS' },
+  { id: 'windows11', label: 'Windows 11' },
+  { id: 'windowsxp', label: 'Windows XP' },
+];
+
+const THEME_STORAGE_KEY = 'georgeos-theme';
+
+function setTheme(themeId) {
+  const valid = themeOptions.some((theme) => theme.id === themeId);
+  const next = valid ? themeId : 'macos';
+  document.documentElement.dataset.theme = next;
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+  } catch {
+    // storage unavailable; keep in-memory theme
+  }
+  document.querySelectorAll('.theme-option').forEach((button) => {
+    button.classList.toggle('active', button.dataset.theme === next);
+  });
+  return next;
+}
+
+(function initTheme() {
+  let saved = 'macos';
+  try {
+    saved = localStorage.getItem(THEME_STORAGE_KEY) || 'macos';
+  } catch {
+    // storage unavailable; default to macOS
+  }
+  document.documentElement.dataset.theme = themeOptions.some((theme) => theme.id === saved) ? saved : 'macos';
+})();
 let currentWorkspace = 0;
 let overviewOpen = false;
 
@@ -154,6 +187,14 @@ const appConfigs = {
     width: '440px',
     height: '360px',
     build: buildSystemBreachApp,
+  },
+  customize: {
+    title: 'Customization',
+    x: 'calc(50% - 220px)',
+    y: 'calc(50% - 200px)',
+    width: '440px',
+    height: '400px',
+    build: buildCustomizeApp,
   },
 };
 
@@ -1886,6 +1927,32 @@ function buildSystemBreachApp(windowElement) {
 
   shell.querySelector('.breach-launch').addEventListener('click', () => {
     window.open(systemBreachUrl, '_blank', 'noopener,noreferrer');
+  });
+
+  return shell;
+}
+
+function buildCustomizeApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'customize-shell';
+  shell.innerHTML = `
+    <h2>Appearance</h2>
+    <p class="customize-intro">Pick a style for GeorgeOS.</p>
+    <div class="customize-themes"></div>
+  `;
+
+  const list = shell.querySelector('.customize-themes');
+  themeOptions.forEach((theme) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `theme-option${document.documentElement.dataset.theme === theme.id ? ' active' : ''}`;
+    button.dataset.theme = theme.id;
+    button.innerHTML = `
+      <span class="theme-swatch theme-swatch-${theme.id}"></span>
+      <span class="theme-label">${theme.label}</span>
+    `;
+    button.addEventListener('click', () => setTheme(theme.id));
+    list.append(button);
   });
 
   return shell;

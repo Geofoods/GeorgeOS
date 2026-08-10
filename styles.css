@@ -1466,3 +1466,313 @@ body::before {
     transition: none !important;
   }
 }
+
+.customize-shell {
+  display: grid;
+  gap: 12px;
+  color: #eef6ff;
+}
+
+.customize-shell h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.customize-intro {
+  margin: 0;
+  font-size: 0.86rem;
+  color: rgba(238, 246, 255, 0.78);
+}
+
+.customize-themes {
+  display: grid;
+  gap: 10px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.theme-option:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.theme-option.active {
+  box-shadow: inset 0 0 0 2px rgba(14, 146, 255, 0.6);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.theme-swatch {
+  width: 34px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  flex: 0 0 auto;
+}
+
+.theme-swatch-macos {
+  background: linear-gradient(180deg, #8fc7f0 0%, #f0d7b0 40%, #0c4fd4 100%);
+}
+
+.theme-swatch-windows11 {
+  background: linear-gradient(135deg, #16264d 0%, #2a6df0 60%, #4ec9ff 100%);
+}
+
+.theme-swatch-windowsxp {
+  background: linear-gradient(180deg, #2f7fe0 0%, #0653d1 100%);
+}
+
+html[data-theme="windows11"] .screen {
+  background:
+    radial-gradient(circle at 80% 12%, rgba(255, 196, 92, 0.42), transparent 26%),
+    radial-gradient(circle at 24% 28%, rgba(64, 148, 255, 0.5), transparent 30%),
+    radial-gradient(circle at 55% 105%, rgba(122, 61, 190, 0.45), transparent 36%),
+    linear-gradient(180deg, #1c1f3a 0%, #0d3b82 60%, #08122e 100%);
+}
+
+html[data-theme="windows11"] .desktop-wallpaper {
+  background:
+    radial-gradient(120% 120% at 82% 8%, rgba(255, 168, 64, 0.65), transparent 42%),
+    radial-gradient(110% 120% at 16% 32%, rgba(60, 132, 255, 0.75), transparent 46%),
+    radial-gradient(130% 130% at 55% 112%, rgba(164, 72, 224, 0.65), transparent 50%),
+    linear-gradient(180deg, #16264d 0%, #123f86 55%, #0a142e 100%);
+}
+
+html[data-theme="windows11"] .desktop-wallpaper::before,
+html[data-theme="windows11"] .desktop-wallpaper::after {
+  display: none;
+}
+
+html[data-theme="windows11"] .taskbar {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  width: 100%;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  background: rgba(31, 33, 50, 0.84);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.24);
+}
+
+html[data-theme="windows11"] .taskbar-app {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-theme="windows11"] .taskbar-app:hover {
+  transform: none;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme="windows11"] .taskbar-app.active {
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+}
+
+html[data-theme="windows11"] .taskbar-app.active::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+html[data-theme="windows11"] .app-window {
+  border-radius: 8px;
+  background: rgba(28, 30, 42, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(18px);
+}
+
+html[data-theme="windows11"] .window-titlebar {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme="windows11"] .window-controls {
+  gap: 0;
+}
+
+html[data-theme="windows11"] .window-control {
+  width: 44px;
+  height: 30px;
+  border-radius: 4px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+html[data-theme="windows11"] .window-control::before {
+  content: "";
+  line-height: 1;
+}
+
+html[data-theme="windows11"] .window-control.close::before {
+  content: "✕";
+}
+
+html[data-theme="windows11"] .window-control.maximize::before {
+  content: "□";
+}
+
+html[data-theme="windows11"] .window-control.fullscreen::before {
+  content: "⤢";
+}
+
+html[data-theme="windows11"] .window-control:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme="windows11"] .window-control.close:hover {
+  background: rgba(224, 49, 49, 0.9);
+}
+
+html[data-theme="windowsxp"] .screen {
+  background: linear-gradient(180deg, #16b9ff 0%, #2f7fe0 38%, #0653d1 100%);
+}
+
+html[data-theme="windowsxp"] .desktop-wallpaper {
+  background:
+    radial-gradient(90% 55% at 30% 110%, rgba(44, 126, 235, 0.85), transparent 60%),
+    radial-gradient(72% 50% at 82% 112%, rgba(64, 200, 240, 0.8), transparent 55%),
+    linear-gradient(180deg, #4aa6ff 0%, #1975e0 55%, #0a4fc4 100%);
+}
+
+html[data-theme="windowsxp"] .desktop-wallpaper::before,
+html[data-theme="windowsxp"] .desktop-wallpaper::after {
+  display: none;
+}
+
+html[data-theme="windowsxp"] .taskbar {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  width: 100%;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, #0a52c8 0%, #3c8ef4 10%, #1470e0 45%, #0a4fc9 100%);
+  backdrop-filter: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 -2px 6px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="windowsxp"] .taskbar-app {
+  min-width: 30px;
+  width: auto;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #6fb0f4 0%, #2f7fe0 50%, #1a5fd0 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset -1px 0 0 rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="windowsxp"] .taskbar-app img {
+  width: 22px;
+  height: 22px;
+}
+
+html[data-theme="windowsxp"] .taskbar-app:hover {
+  transform: none;
+  background: linear-gradient(180deg, #7bb8ff 0%, #3f8cf0 50%, #2569dd 100%);
+}
+
+html[data-theme="windowsxp"] .taskbar-app.active {
+  background: linear-gradient(180deg, #0a3d9e 0%, #1b62da 50%, #2b72e0 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="windowsxp"] .app-window {
+  border-radius: 8px 8px 0 0;
+  background: #0d1626;
+  border: 1px solid #002f91;
+  box-shadow: inset 0 0 0 1px #9db6e8, 0 18px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: none;
+}
+
+html[data-theme="windowsxp"] .window-titlebar {
+  height: 28px;
+  color: #ffffff;
+  background: linear-gradient(90deg, #0a42b8 0%, #3d8ff5 55%, #3d8ff5 70%, #7bb8ff 100%);
+}
+
+html[data-theme="windowsxp"] .window-title {
+  color: #ffffff;
+  font-size: 0.78rem;
+}
+
+html[data-theme="windowsxp"] .window-controls {
+  gap: 2px;
+}
+
+html[data-theme="windowsxp"] .window-control {
+  width: 18px;
+  height: 16px;
+  border-radius: 2px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #f6f8fb 0%, #eff3f9 40%, #dce6f5 100%);
+  border: 1px solid #003c74;
+  color: #1a3c6d;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+html[data-theme="windowsxp"] .window-control::before {
+  content: "";
+  line-height: 1;
+}
+
+html[data-theme="windowsxp"] .window-control.close::before {
+  content: "×";
+}
+
+html[data-theme="windowsxp"] .window-control.maximize::before {
+  content: "□";
+}
+
+html[data-theme="windowsxp"] .window-control.fullscreen::before {
+  content: "▣";
+}
+
+html[data-theme="windowsxp"] .window-control:hover {
+  filter: brightness(1.12);
+}
+
+html[data-theme="windowsxp"] .resize-handle {
+  display: none;
+}
