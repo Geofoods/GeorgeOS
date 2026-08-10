@@ -101,6 +101,14 @@ const appConfigs = {
     height: '340px',
     build: buildHolyMolyApp,
   },
+  linkedin: {
+    title: 'LinkedIn',
+    x: 'calc(50% - 220px)',
+    y: 'calc(50% - 170px)',
+    width: '440px',
+    height: '340px',
+    build: buildLinkedinApp,
+  },
   'system-breach': {
     title: 'System Breach',
     x: 'calc(50% - 220px)',
@@ -1092,6 +1100,42 @@ function launchHolyMoly(windowElement) {
   const status = windowElement.querySelector('.holymoly-description');
   if (status) {
     status.textContent = 'Holy Moly opened in a new tab. Have fun!';
+  }
+}
+
+const linkedinUrl = 'https://www.linkedin.com/in/george-sun-54647b2a7/';
+let linkedinOpenedOnce = false;
+
+function buildLinkedinApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'linkedin-shell';
+  shell.innerHTML = `
+    <img class="linkedin-banner" src="icons/linkedin-icon.webp" alt="" aria-hidden="true" />
+    <h2>LinkedIn</h2>
+    <p class="linkedin-description">
+      George Sun's LinkedIn profile — click below to open it in a new tab.
+    </p>
+    <button type="button" class="linkedin-launch">Open LinkedIn</button>
+  `;
+
+  shell.querySelector('.linkedin-launch').addEventListener('click', () => {
+    launchLinkedin(windowElement);
+  });
+
+  if (!linkedinOpenedOnce) {
+    linkedinOpenedOnce = true;
+    setTimeout(() => launchLinkedin(windowElement), 300);
+  }
+
+  return shell;
+}
+
+function launchLinkedin(windowElement) {
+  window.open(linkedinUrl, '_blank', 'noopener,noreferrer');
+
+  const status = windowElement.querySelector('.linkedin-description');
+  if (status) {
+    status.textContent = 'LinkedIn opened in a new tab.';
   }
 }
 
