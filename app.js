@@ -21,6 +21,86 @@ const WORKSPACE_COLUMNS = 2;
 const windows = new Map();
 let topZ = 20;
 
+const SOUNDS = {
+  unlock: [[523.25, 0, 0.06, 0.18], [659.25, 0.09, 0.06, 0.18], [783.99, 0.18, 0.08, 0.22]],
+  open: [[440, 0, 0.05, 0.16], [587.33, 0.06, 0.06, 0.18]],
+  close: [[587.33, 0, 0.05, 0.14], [349.23, 0.07, 0.06, 0.2]],
+  error: [[196, 0, 0.18, 0.25], [185, 0.2, 0.2, 0.25]],
+  tap: [[880, 0, 0.03, 0.08]],
+};
+
+const soundEngine = (() => {
+  let context = null;
+  let master = null;
+  let muted = false;
+  try {
+    muted = localStorage.getItem('georgeos-muted') === '1';
+  } catch {
+    muted = false;
+  }
+
+  function ensureContext() {
+    if (!context) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) {
+        return null;
+      }
+      context = new AudioContext();
+      master = context.createGain();
+      master.gain.value = 0.6;
+      master.connect(context.destination);
+    }
+    if (context.state === 'suspended') {
+      context.resume();
+    }
+    return context;
+  }
+
+  function tone(freq, start, duration, gain = 0.2) {
+    const ctx = ensureContext();
+    if (!ctx || muted) {
+      return;
+    }
+    const osc = ctx.createOscillator();
+    const oscGain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const now = ctx.currentTime + start;
+    oscGain.gain.setValueAtTime(0.0001, now);
+    oscGain.gain.exponentialRampToValueAtTime(gain, now + 0.01);
+    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(oscGain);
+    oscGain.connect(master);
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+  }
+
+  function play(name) {
+    const notes = SOUNDS[name];
+    if (!notes) {
+      return;
+    }
+    notes.forEach(([freq, start, duration, gain]) => tone(freq, start, duration, gain));
+  }
+
+  function setMuted(value) {
+    muted = value;
+    try {
+      localStorage.setItem('georgeos-muted', muted ? '1' : '0');
+    } catch {
+      // storage unavailable; keep in-memory state
+    }
+  }
+
+  return { play, ensureContext, isMuted: () => muted, setMuted };
+})();
+
+window.__georgeosToggleMute = () => {
+  const muted = !soundEngine.isMuted();
+  soundEngine.setMuted(muted);
+  return muted;
+};
+
 const themeOptions = [
   { id: 'macos', label: 'macOS' },
   { id: 'windows11', label: 'Windows 11' },
@@ -216,7 +296,12 @@ function showWelcome() {
   welcomeView.hidden = false;
 }
 
-continueButton.addEventListener('click', showDesktop);
+continueButton.addEventListener('click', () => {
+  soundEngine.ensureContext();
+  soundEngine.play('tap');
+  setTimeout(() => soundEngine.play('unlock'), 60);
+  showDesktop();
+});
 
 window.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && scene.dataset.view === 'desktop') {
@@ -331,6 +416,7 @@ function openApp(appId) {
   if (overviewOpen) {
     closeOverview();
   }
+  soundEngine.play('open');
   if (windowWorkspace !== currentWorkspace) {
     switchWorkspace(windowWorkspace);
   } else {
@@ -405,6 +491,7 @@ function closeWindow(element) {
   element.dataset.state = 'closed';
   element.hidden = true;
   markTaskbarActive(appId, false);
+  soundEngine.play('close');
   stopCameraApp(element);
   updateWindowVisibility();
 }
