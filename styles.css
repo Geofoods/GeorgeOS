@@ -404,6 +404,52 @@ body::before {
   color: #eef6ff;
 }
 
+.holymoly-shell {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  align-content: start;
+  color: #eef6ff;
+}
+
+.holymoly-banner {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.holymoly-shell h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.holymoly-description {
+  margin: 0;
+  font-size: 0.86rem;
+  color: rgba(238, 246, 255, 0.78);
+}
+
+.holymoly-launch {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 22px;
+  background: rgba(14, 146, 255, 0.9);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.holymoly-launch:hover {
+  transform: translateY(-2px);
+  background: rgba(14, 146, 255, 1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+}
+
 .app-shell h2 {
   margin: 0;
   font-size: 1rem;
@@ -845,6 +891,55 @@ body::before {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.breach-shell {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 12px;
+  text-align: center;
+  color: #eef6ff;
+  min-height: 100%;
+}
+
+.breach-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.breach-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.breach-desc,
+.breach-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(238, 246, 255, 0.76);
+}
+
+.breach-launch {
+  margin-top: 4px;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 20px;
+  background: rgba(14, 146, 255, 0.9);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.breach-launch:hover {
+  transform: translateY(-2px);
+  background: rgba(14, 146, 255, 1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
 }
 
 .camera-controls,

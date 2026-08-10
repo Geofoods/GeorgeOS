@@ -101,6 +101,14 @@ const appConfigs = {
     height: '340px',
     build: buildHolyMolyApp,
   },
+  'system-breach': {
+    title: 'System Breach',
+    x: 'calc(50% - 220px)',
+    y: 'calc(50% - 180px)',
+    width: '440px',
+    height: '360px',
+    build: buildSystemBreachApp,
+  },
 };
 
 function showDesktop() {
@@ -1044,6 +1052,42 @@ function buildMailApp(windowElement) {
 
 const githubUser = 'Geofoods';
 
+const holyMolyUrl = 'https://bryanjietang-boop.itch.io/holy-moly';
+let holyMolyOpenedOnce = false;
+
+function buildHolyMolyApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'holymoly-shell';
+  shell.innerHTML = `
+    <img class="holymoly-banner" src="icons/holy-moly-icon.png" alt="" aria-hidden="true" />
+    <h2>Holy Moly</h2>
+    <p class="holymoly-description">
+      An itch.io game — Holy Moly! Click below to play it in a new tab.
+    </p>
+    <button type="button" class="holymoly-launch">Play Holy Moly</button>
+  `;
+
+  shell.querySelector('.holymoly-launch').addEventListener('click', () => {
+    launchHolyMoly(windowElement);
+  });
+
+  if (!holyMolyOpenedOnce) {
+    holyMolyOpenedOnce = true;
+    setTimeout(() => launchHolyMoly(windowElement), 300);
+  }
+
+  return shell;
+}
+
+function launchHolyMoly(windowElement) {
+  window.open(holyMolyUrl, '_blank', 'noopener,noreferrer');
+
+  const status = windowElement.querySelector('.holymoly-description');
+  if (status) {
+    status.textContent = 'Holy Moly opened in a new tab. Have fun!';
+  }
+}
+
 function buildProjectsApp(windowElement) {
   const shell = document.createElement('div');
   shell.className = 'projects-shell';
@@ -1122,5 +1166,25 @@ function buildProjectsApp(windowElement) {
   shell.querySelector('.projects-refresh').addEventListener('click', loadProjects);
 
   loadProjects();
+  return shell;
+}
+
+const systemBreachUrl = 'https://georgecodes.itch.io/system-breach';
+
+function buildSystemBreachApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'breach-shell';
+  shell.innerHTML = `
+    <img class="breach-icon" src="icons/system-breach-icon.png" alt="" aria-hidden="true" />
+    <h2 class="breach-title">System Breach</h2>
+    <p class="breach-desc">A game by georgecodes. Launch it on itch.io to play.</p>
+    <button type="button" class="breach-launch">Play System Breach</button>
+    <p class="breach-hint">Opens the game page in a new tab.</p>
+  `;
+
+  shell.querySelector('.breach-launch').addEventListener('click', () => {
+    window.open(systemBreachUrl, '_blank', 'noopener,noreferrer');
+  });
+
   return shell;
 }
