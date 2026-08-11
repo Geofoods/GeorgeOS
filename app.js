@@ -107,32 +107,17 @@ const themeOptions = [
   { id: 'windowsxp', label: 'Windows XP' },
 ];
 
-const THEME_STORAGE_KEY = 'georgeos-theme';
-
 function setTheme(themeId) {
   const valid = themeOptions.some((theme) => theme.id === themeId);
   const next = valid ? themeId : 'macos';
   document.documentElement.dataset.theme = next;
-  try {
-    localStorage.setItem(THEME_STORAGE_KEY, next);
-  } catch {
-    // storage unavailable; keep in-memory theme
-  }
   document.querySelectorAll('.theme-option').forEach((button) => {
     button.classList.toggle('active', button.dataset.theme === next);
   });
   return next;
 }
 
-(function initTheme() {
-  let saved = 'macos';
-  try {
-    saved = localStorage.getItem(THEME_STORAGE_KEY) || 'macos';
-  } catch {
-    // storage unavailable; default to macOS
-  }
-  document.documentElement.dataset.theme = themeOptions.some((theme) => theme.id === saved) ? saved : 'macos';
-})();
+document.documentElement.dataset.theme = 'macos';
 let currentWorkspace = 0;
 let overviewOpen = false;
 

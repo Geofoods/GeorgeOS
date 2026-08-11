@@ -1543,19 +1543,6 @@ html[data-theme="windows11"] .screen {
     linear-gradient(180deg, #1c1f3a 0%, #0d3b82 60%, #08122e 100%);
 }
 
-html[data-theme="windows11"] .desktop-wallpaper {
-  background:
-    radial-gradient(120% 120% at 82% 8%, rgba(255, 168, 64, 0.65), transparent 42%),
-    radial-gradient(110% 120% at 16% 32%, rgba(60, 132, 255, 0.75), transparent 46%),
-    radial-gradient(130% 130% at 55% 112%, rgba(164, 72, 224, 0.65), transparent 50%),
-    linear-gradient(180deg, #16264d 0%, #123f86 55%, #0a142e 100%);
-}
-
-html[data-theme="windows11"] .desktop-wallpaper::before,
-html[data-theme="windows11"] .desktop-wallpaper::after {
-  display: none;
-}
-
 html[data-theme="windows11"] .taskbar {
   left: 0;
   right: 0;
@@ -1659,18 +1646,6 @@ html[data-theme="windows11"] .window-control.close:hover {
 
 html[data-theme="windowsxp"] .screen {
   background: linear-gradient(180deg, #16b9ff 0%, #2f7fe0 38%, #0653d1 100%);
-}
-
-html[data-theme="windowsxp"] .desktop-wallpaper {
-  background:
-    radial-gradient(90% 55% at 30% 110%, rgba(44, 126, 235, 0.85), transparent 60%),
-    radial-gradient(72% 50% at 82% 112%, rgba(64, 200, 240, 0.8), transparent 55%),
-    linear-gradient(180deg, #4aa6ff 0%, #1975e0 55%, #0a4fc4 100%);
-}
-
-html[data-theme="windowsxp"] .desktop-wallpaper::before,
-html[data-theme="windowsxp"] .desktop-wallpaper::after {
-  display: none;
 }
 
 html[data-theme="windowsxp"] .taskbar {
