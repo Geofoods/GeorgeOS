@@ -102,22 +102,36 @@ window.__georgeosToggleMute = () => {
 };
 
 const voiceOverlay = document.querySelector('#voice-overlay');
+const voiceCaption = document.querySelector('#voice-caption');
 let voiceRecognition = null;
 let voiceHideTimer = null;
+let voiceCleanupTimer = null;
 
-function showVoiceOverlay() {
+function setVoiceCaption(text) {
+  if (voiceCaption) {
+    voiceCaption.textContent = text;
+  }
+}
+
+function showVoiceOverlay(caption = 'Listening…', duration = 3200) {
   if (!voiceOverlay) {
     return;
   }
+  setVoiceCaption(caption);
   voiceOverlay.classList.remove('hide');
   voiceOverlay.hidden = false;
   window.clearTimeout(voiceHideTimer);
+  window.clearTimeout(voiceCleanupTimer);
   voiceHideTimer = window.setTimeout(() => {
     voiceOverlay.classList.add('hide');
-    window.setTimeout(() => {
-      voiceOverlay.hidden = true;
-    }, 450);
-  }, 3200);
+    voiceCleanupTimer = window.setTimeout(overlayCleanup, 450);
+  }, duration);
+}
+
+function overlayCleanup() {
+  if (voiceOverlay) {
+    voiceOverlay.hidden = true;
+  }
 }
 
 const voiceAppNames = [
@@ -150,7 +164,7 @@ function normalizeVoiceText(text) {
 
 function openAppFromVoice(commandText) {
   if (!/\bopen\b/.test(commandText)) {
-    return;
+    return false;
   }
   for (const app of voiceAppNames) {
     if (app.names.some((name) => commandText.includes(name))) {
@@ -159,23 +173,34 @@ function openAppFromVoice(commandText) {
         voiceLastCommandApp = app.id;
         voiceLastCommandTime = now;
         openApp(app.id);
+        return true;
       }
-      return;
+      return false;
     }
   }
+  return false;
 }
 
 function processVoiceUtterance(transcript) {
   const normalized = normalizeVoiceText(transcript);
+  if (!normalized) {
+    return;
+  }
+
+  console.log('[voice] heard:', normalized);
+
   const wakeIndex = normalized.search(/\bhey george\b/);
   if (wakeIndex === -1) {
     return;
   }
 
-  showVoiceOverlay();
+  showVoiceOverlay('Listening…');
 
   const commandText = normalized.slice(wakeIndex + 'hey george'.length);
-  openAppFromVoice(commandText);
+  const opened = openAppFromVoice(commandText);
+  if (opened) {
+    showVoiceOverlay('Opening app', 2600);
+  }
 }
 
 function handleVoiceResult(event) {
@@ -184,9 +209,7 @@ function handleVoiceResult(event) {
     return;
   }
 
-  if (!newest.isFinal) {
-    voiceUtterance = newest[0].transcript;
-  }
+  voiceUtterance = newest[0].transcript;
 
   if (voiceUtterance) {
     processVoiceUtterance(voiceUtterance);
@@ -235,8 +258,24 @@ function startVoiceListener() {
   voiceRecognition.onresult = handleVoiceResult;
 
   voiceRecognition.onerror = (event) => {
-    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-      running = false;
+    console.warn('[voice] error:', event.error);
+    switch (event.error) {
+      case 'not-allowed':
+      case 'service-not-allowed':
+        showVoiceOverlay('Microphone is blocked — allow mic access', 4000);
+        running = false;
+        voiceRecognition = null;
+        break;
+      case 'network':
+        showVoiceOverlay('Voice needs an internet connection', 4000);
+        break;
+      case 'audio-capture':
+        setVoiceCaption('No microphone found');
+        showVoiceOverlay('No microphone found on this device', 4000);
+        running = false;
+        break;
+      default:
+        break;
     }
   };
 
@@ -249,7 +288,19 @@ function startVoiceListener() {
   start();
 }
 
-document.addEventListener('pointerdown', startVoiceListener, { once: true });
+function attemptVoiceStart() {
+  if (!voiceRecognition) {
+    startVoiceListener();
+  }
+}
+
+document.addEventListener('pointerdown', attemptVoiceStart);
+window.addEventListener('DOMContentLoaded', () => {
+  window.setTimeout(attemptVoiceStart, 800);
+});
+if (document.readyState !== 'loading') {
+  window.setTimeout(attemptVoiceStart, 800);
+}
 
 const themeOptions = [
   { id: 'macos', label: 'macOS' },
