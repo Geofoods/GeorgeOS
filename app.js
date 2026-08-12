@@ -137,6 +137,7 @@ const voiceAppNames = [
 ];
 
 let voiceUtterance = '';
+let voiceLastCommandApp = null;
 let voiceLastCommandTime = 0;
 
 function normalizeVoiceText(text) {
@@ -154,7 +155,8 @@ function openAppFromVoice(commandText) {
   for (const app of voiceAppNames) {
     if (app.names.some((name) => commandText.includes(name))) {
       const now = Date.now();
-      if (now - voiceLastCommandTime > 2500) {
+      if (voiceLastCommandApp !== app.id || now - voiceLastCommandTime > 2500) {
+        voiceLastCommandApp = app.id;
         voiceLastCommandTime = now;
         openApp(app.id);
       }
