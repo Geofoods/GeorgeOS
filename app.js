@@ -118,6 +118,52 @@ function setTheme(themeId) {
 }
 
 document.documentElement.dataset.theme = 'macos';
+
+const ICON_SIZE_BASE = 28;
+const TEXT_SIZE_BASE = 16;
+
+function readStoredNumber(key, fallback) {
+  try {
+    const value = Number(localStorage.getItem(key));
+    return Number.isFinite(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function getIconScale() {
+  return readStoredNumber('georgeos-icon-scale', 1);
+}
+
+function getTextScale() {
+  return readStoredNumber('georgeos-text-scale', 1);
+}
+
+function applyIconScale(scale) {
+  const clamped = Math.min(1.75, Math.max(0.5, scale));
+  document.documentElement.style.setProperty('--georgeos-icon-size', `${Math.round(ICON_SIZE_BASE * clamped)}px`);
+  try {
+    localStorage.setItem('georgeos-icon-scale', String(clamped));
+  } catch {
+    // storage unavailable; keep in-memory value
+  }
+  return clamped;
+}
+
+function applyTextScale(scale) {
+  const clamped = Math.min(1.5, Math.max(0.8, scale));
+  document.documentElement.style.fontSize = `${TEXT_SIZE_BASE * clamped}px`;
+  try {
+    localStorage.setItem('georgeos-text-scale', String(clamped));
+  } catch {
+    // storage unavailable; keep in-memory value
+  }
+  return clamped;
+}
+
+applyIconScale(getIconScale());
+applyTextScale(getTextScale());
+
 let currentWorkspace = 0;
 let overviewOpen = false;
 
@@ -155,6 +201,43 @@ const photoLibrary = [
 ];
 
 const capturedPhotos = [];
+
+const uploadedPhotos = [];
+try {
+  const storedUploads = JSON.parse(localStorage.getItem('georgeos-uploaded-photos') || '[]');
+  if (Array.isArray(storedUploads)) {
+    storedUploads.forEach((photo) => {
+      if (photo && typeof photo.src === 'string' && typeof photo.title === 'string') {
+        uploadedPhotos.push(photo);
+      }
+    });
+  }
+} catch {
+  // storage unavailable or corrupt; keep uploads empty
+}
+
+function getLibraryPhotos() {
+  return [...photoLibrary, ...capturedPhotos, ...uploadedPhotos];
+}
+
+function persistUploads() {
+  try {
+    localStorage.setItem('georgeos-uploaded-photos', JSON.stringify(uploadedPhotos));
+  } catch {
+    // storage quota exceeded; uploads are kept for this session only
+  }
+}
+
+function notifyLibraryChanged() {
+  windows.forEach(({ element }) => {
+    if (typeof element._refreshPhotos === 'function') {
+      element._refreshPhotos();
+    }
+    if (typeof element._refreshPaintGallery === 'function') {
+      element._refreshPaintGallery();
+    }
+  });
+}
 
 const appConfigs = {
   calculator: {
@@ -1017,15 +1100,16 @@ function buildCalculatorApp(windowElement) {
 function buildPhotosApp(windowElement) {
   const shell = document.createElement('div');
   shell.className = 'photos-shell';
-  const initialPhoto = photoLibrary[0];
   shell.innerHTML = `
     <div class="photos-sidebar">
       <div class="photos-sidebar-title">Library</div>
-      <button type="button" class="photos-album active">All Photos <span>${photoLibrary.length}</span></button>
+      <button type="button" class="photos-album active">All Photos <span>${getLibraryPhotos().length}</span></button>
+      <button type="button" class="photos-upload">Upload Photos</button>
+      <input type="file" class="photos-file" accept="image/*" multiple hidden />
     </div>
     <div class="photos-main">
       <div class="photos-hero">
-        <img class="photos-image" src="${initialPhoto.src}" alt="Photo" />
+        <img class="photos-image" src="${photoLibrary[0].src}" alt="Photo" />
         <button type="button" class="photos-wallpaper-btn">Set as Background</button>
       </div>
       <div class="photos-grid" aria-label="Photo library"></div>
@@ -1035,30 +1119,88 @@ function buildPhotosApp(windowElement) {
   const heroImage = shell.querySelector('.photos-image');
   const photoGrid = shell.querySelector('.photos-grid');
   const wallpaperBtn = shell.querySelector('.photos-wallpaper-btn');
+  const photoCount = shell.querySelector('.photos-album span');
+  const uploadButton = shell.querySelector('.photos-upload');
+  const fileInput = shell.querySelector('.photos-file');
   const wallpaperElement = document.querySelector('.desktop-wallpaper');
 
-  photoLibrary.forEach((photo, index) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `photos-thumb${index === 0 ? ' active' : ''}`;
-    button.setAttribute('aria-label', `Photo ${index + 1}`);
-    button.innerHTML = `
-      <img src="${photo.src}" alt="Photo" />
-    `;
-
-    button.addEventListener('click', () => {
-      heroImage.src = photo.src;
-      heroImage.alt = 'Photo';
-      shell.querySelectorAll('.photos-thumb').forEach((thumb) => thumb.classList.remove('active'));
-      button.classList.add('active');
-    });
-
-    photoGrid.append(button);
+  uploadButton.addEventListener('click', () => {
+    fileInput.click();
   });
+
+  fileInput.addEventListener('change', () => {
+    const files = [...fileInput.files];
+    let pending = files.length;
+    let added = false;
+
+    function finish() {
+      fileInput.value = '';
+      if (!added) {
+        return;
+      }
+      persistUploads();
+      notifyLibraryChanged();
+      render();
+    }
+
+    if (!pending) {
+      return;
+    }
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        pending -= 1;
+        if (pending === 0) {
+          finish();
+        }
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        added = true;
+        const baseName = file.name.replace(/\.[^.]+$/, '') || `Uploaded ${uploadedPhotos.length + 1}`;
+        uploadedPhotos.push({ src: reader.result, title: baseName });
+        pending -= 1;
+        if (pending === 0) {
+          finish();
+        }
+      };
+      reader.onerror = () => {
+        pending -= 1;
+        if (pending === 0) {
+          finish();
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  function render() {
+    photoGrid.textContent = '';
+    photoCount.textContent = getLibraryPhotos().length;
+    getLibraryPhotos().forEach((photo, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `photos-thumb${index === 0 ? ' active' : ''}`;
+      button.setAttribute('aria-label', photo.title);
+      button.innerHTML = `<img src="${photo.src}" alt="${photo.title}" />`;
+
+      button.addEventListener('click', () => {
+        heroImage.src = photo.src;
+        heroImage.alt = photo.title;
+        photoGrid.querySelectorAll('.photos-thumb').forEach((thumb) => thumb.classList.remove('active'));
+        button.classList.add('active');
+      });
+
+      photoGrid.append(button);
+    });
+  }
 
   wallpaperBtn.addEventListener('click', () => {
     wallpaperElement.style.backgroundImage = `url("${heroImage.src}")`;
   });
+
+  windowElement._refreshPhotos = render;
+  render();
 
   return shell;
 }
@@ -1075,6 +1217,7 @@ function buildPaintApp(windowElement) {
       <label class="paint-field">
         <span class="paint-field-label">Size</span>
         <input type="range" class="paint-size" min="1" max="40" value="8" aria-label="Brush size" />
+        <span class="paint-size-value">8</span>
       </label>
       <button type="button" class="paint-tool paint-brush active">Brush</button>
       <button type="button" class="paint-tool paint-eraser">Eraser</button>
@@ -1101,6 +1244,7 @@ function buildPaintApp(windowElement) {
   const emptyNote = shell.querySelector('.paint-empty');
   const colorInput = shell.querySelector('.paint-color');
   const sizeInput = shell.querySelector('.paint-size');
+  const sizeValue = shell.querySelector('.paint-size-value');
   const brushButton = shell.querySelector('.paint-brush');
   const eraserButton = shell.querySelector('.paint-eraser');
   const clearButton = shell.querySelector('.paint-clear');
@@ -1108,10 +1252,15 @@ function buildPaintApp(windowElement) {
 
   const backContext = backCanvas.getContext('2d');
   const foreContext = foreCanvas.getContext('2d');
+  let currentImage = null;
   let isEraser = false;
   let painting = false;
   let lastPoint = null;
   let activeThumb = null;
+
+  sizeInput.addEventListener('input', () => {
+    sizeValue.textContent = sizeInput.value;
+  });
 
   function resizeCanvas(canvas, context) {
     const rect = stage.getBoundingClientRect();
@@ -1138,16 +1287,22 @@ function buildPaintApp(windowElement) {
     context.drawImage(image, x, y, drawWidth, drawHeight);
   }
 
+  function fitToStage() {
+    const { width, height } = resizeCanvas(backCanvas, backContext);
+    resizeCanvas(foreCanvas, foreContext);
+    if (currentImage) {
+      backContext.clearRect(0, 0, backCanvas.width, backCanvas.height);
+      drawCover(backContext, currentImage, width, height);
+    }
+  }
+
   function drawSource(src) {
     const image = new Image();
     image.onload = () => {
-      const { width, height } = resizeCanvas(backCanvas, backContext);
-      resizeCanvas(foreCanvas, foreContext);
-      backContext.clearRect(0, 0, backCanvas.width, backCanvas.height);
-      drawCover(backContext, image, width, height);
+      currentImage = image;
+      fitToStage();
       foreContext.clearRect(0, 0, foreCanvas.width, foreCanvas.height);
       emptyNote.hidden = true;
-      stage.hidden = false;
     };
     image.onerror = () => {
       emptyNote.textContent = 'Could not load that photo.';
@@ -1156,10 +1311,18 @@ function buildPaintApp(windowElement) {
     image.src = src;
   }
 
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(() => {
+      fitToStage();
+    }).observe(stage);
+  }
+
   function sourceImage(photo, index) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = `paint-source${index === 0 ? ' active' : ''}`;
+    const isCurrent = activeThumb && activeThumb.dataset.src === photo.src;
+    button.className = `paint-source${isCurrent ? ' active' : ''}`;
+    button.dataset.src = photo.src;
     button.setAttribute('aria-label', photo.title);
     button.innerHTML = `<img src="${photo.src}" alt="${photo.title}" />`;
     button.addEventListener('click', () => {
@@ -1175,12 +1338,12 @@ function buildPaintApp(windowElement) {
 
   function renderGallery() {
     gallery.textContent = '';
-    const allPhotos = [...photoLibrary, ...capturedPhotos];
-    if (!allPhotos.length) {
+    const photos = getLibraryPhotos();
+    if (!photos.length) {
       gallery.textContent = 'No photos yet.';
       return;
     }
-    allPhotos.forEach((photo, index) => {
+    photos.forEach((photo, index) => {
       gallery.append(sourceImage(photo, index));
     });
   }
@@ -1202,7 +1365,9 @@ function buildPaintApp(windowElement) {
   });
 
   saveButton.addEventListener('click', () => {
-    if (emptyNote.hidden === false) {
+    if (!currentImage) {
+      emptyNote.textContent = 'Pick a photo from the library, then save.';
+      emptyNote.hidden = false;
       return;
     }
     const combined = document.createElement('canvas');
@@ -1215,8 +1380,18 @@ function buildPaintApp(windowElement) {
       if (!blob) {
         return;
       }
-      const fileName = `georgeos-painting-${Date.now()}.png`;
-      addDownload(windowElement, blob, fileName, 'Painting saved');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `georgeos-painting-${Date.now()}.png`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      saveButton.textContent = 'Saved';
+      window.setTimeout(() => {
+        saveButton.textContent = 'Save';
+      }, 1200);
     }, 'image/png');
   });
 
@@ -1281,8 +1456,10 @@ function buildPaintApp(windowElement) {
   });
 
   renderGallery();
-  const initialPhoto = [...photoLibrary, ...capturedPhotos][0];
+  windowElement._refreshPaintGallery = renderGallery;
+  const initialPhoto = getLibraryPhotos()[0];
   if (initialPhoto) {
+    activeThumb = gallery.querySelector(`.paint-source[data-src="${CSS.escape(initialPhoto.src)}"]`) || null;
     drawSource(initialPhoto.src);
   }
 
@@ -1559,6 +1736,7 @@ function capturePhoto(windowElement) {
     const fileName = `georgeos-photo-${Date.now()}.png`;
     addDownload(windowElement, blob, fileName, 'Photo captured');
     capturedPhotos.push({ src: URL.createObjectURL(blob), title: `Captured ${capturedPhotos.length + 1}` });
+    notifyLibraryChanged();
     if (message) {
       message.textContent = 'Photo captured and ready to download.';
     }
@@ -2009,9 +2187,40 @@ function buildCustomizeApp(windowElement) {
   shell.className = 'customize-shell';
   shell.innerHTML = `
     <h2>Appearance</h2>
-    <p class="customize-intro">Pick a style for GeorgeOS.</p>
+    <p class="customize-intro">Pick a style and adjust icon and text sizes.</p>
+    <div class="customize-settings">
+      <div class="customize-setting">
+        <div class="customize-setting-copy">
+          <span class="customize-setting-label">Icon size</span>
+          <span class="customize-setting-value">${Math.round(getIconScale() * 100)}%</span>
+        </div>
+        <input type="range" class="customize-range customize-icon-range" min="50" max="175" step="25" value="${Math.round(getIconScale() * 100)}" aria-label="Icon size" />
+      </div>
+      <div class="customize-setting">
+        <div class="customize-setting-copy">
+          <span class="customize-setting-label">Text size</span>
+          <span class="customize-setting-value">${Math.round(getTextScale() * 100)}%</span>
+        </div>
+        <input type="range" class="customize-range customize-text-range" min="80" max="150" step="5" value="${Math.round(getTextScale() * 100)}" aria-label="Text size" />
+      </div>
+    </div>
     <div class="customize-themes"></div>
   `;
+
+  const iconRange = shell.querySelector('.customize-icon-range');
+  const textRange = shell.querySelector('.customize-text-range');
+
+  iconRange.addEventListener('input', () => {
+    const scale = Number(iconRange.value) / 100;
+    applyIconScale(scale);
+    iconRange.closest('.customize-setting').querySelector('.customize-setting-value').textContent = `${Math.round(scale * 100)}%`;
+  });
+
+  textRange.addEventListener('input', () => {
+    const scale = Number(textRange.value) / 100;
+    applyTextScale(scale);
+    textRange.closest('.customize-setting').querySelector('.customize-setting-value').textContent = `${Math.round(scale * 100)}%`;
+  });
 
   const list = shell.querySelector('.customize-themes');
   themeOptions.forEach((theme) => {
