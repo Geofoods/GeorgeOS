@@ -182,6 +182,11 @@ function openAppFromVoice(commandText) {
 }
 
 function processVoiceUtterance(transcript) {
+  if (!navigator.onLine) {
+    console.log('[voice] offline — ignoring utterance');
+    return;
+  }
+
   const normalized = normalizeVoiceText(transcript);
   if (!normalized) {
     return;
@@ -233,6 +238,11 @@ function startVoiceListener() {
     return;
   }
 
+  if (!navigator.onLine) {
+    console.log('[voice] offline — voice control idle until connection returns');
+    return;
+  }
+
   let running = false;
 
   const start = () => {
@@ -276,7 +286,9 @@ function startVoiceListener() {
         voiceRecognition = null;
         break;
       case 'network':
-        showVoiceOverlay('Voice needs an internet connection', 4000);
+        console.log('[voice] no internet — voice control disabled until connection returns');
+        running = false;
+        voiceRecognition = null;
         break;
       case 'audio-capture':
         setVoiceCaption('No microphone found');
@@ -312,6 +324,15 @@ window.addEventListener('DOMContentLoaded', () => {
 if (document.readyState !== 'loading') {
   window.setTimeout(() => attemptVoiceStart('ready'), 800);
 }
+
+window.addEventListener('online', () => {
+  console.log('[voice] connection restored — enabling voice control');
+  window.setTimeout(() => attemptVoiceStart('online'), 300);
+});
+
+window.addEventListener('offline', () => {
+  console.log('[voice] connection lost — voice control idle');
+});
 
 const themeOptions = [
   { id: 'macos', label: 'macOS' },
@@ -693,7 +714,22 @@ taskbarButtons.forEach((button) => {
   });
 });
 
+const desktopShortcuts = {
+  container: null,
+  add() {},
+  remove() {},
+  has() {
+    return false;
+  },
+};
+
+const suppressClickAfterDrag = (event) => {
+  event.stopPropagation();
+  event.preventDefault();
+};
+
 setupTaskbarReorder();
+setupDesktopIcons();
 
 function setupTaskbarReorder() {
   const taskbar = document.querySelector('.taskbar');
@@ -773,7 +809,7 @@ function setupTaskbarReorder() {
     }
   }
 
-  function onUp() {
+  function onUp(event) {
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
     if (dragButton) {
@@ -782,6 +818,10 @@ function setupTaskbarReorder() {
     document.body.classList.remove('taskbar-reordering');
     if (moved) {
       persistOrder();
+      const dropElement = document.elementFromPoint(event.clientX, event.clientY);
+      if (dropElement?.closest('.screen') && !dropElement.closest('.taskbar, .window-layer, .overview')) {
+        desktopShortcuts.add(dragButton.dataset.app);
+      }
       window.addEventListener('click', suppressClick, { capture: true, once: true });
     }
     dragButton = null;
@@ -809,6 +849,135 @@ function setupTaskbarReorder() {
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp, { once: true });
     });
+  });
+}
+
+function setupDesktopIcons() {
+  const screen = desktopView.querySelector('.screen');
+  const container = document.createElement('div');
+  container.className = 'desktop-icons';
+  container.setAttribute('aria-label', 'Desktop shortcuts');
+  screen.append(container);
+
+  const taskbar = document.querySelector('.taskbar');
+
+  function readDesktopApps() {
+    try {
+      const stored = JSON.parse(localStorage.getItem('georgeos-desktop-apps') || '[]');
+      return Array.isArray(stored) ? stored : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function persistDesktopApps() {
+    const apps = [...container.querySelectorAll('.desktop-icon')].map((icon) => icon.dataset.app);
+    try {
+      localStorage.setItem('georgeos-desktop-apps', JSON.stringify(apps));
+    } catch {
+      // storage unavailable; layout is session-only
+    }
+  }
+
+  function buildIcon(appId) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'desktop-icon';
+    button.dataset.app = appId;
+    const title = appConfigs[appId]?.title || appId;
+    button.setAttribute('aria-label', `Open ${title}`);
+    const iconSrc = taskbar.querySelector(`.taskbar-app[data-app="${appId}"] img`)?.getAttribute('src') || '';
+    button.innerHTML = `<img src="${iconSrc}" alt="" aria-hidden="true" /><span class="desktop-icon-label">${title}</span>`;
+    button.addEventListener('click', () => {
+      showDesktop();
+      openApp(appId);
+    });
+    return button;
+  }
+
+  function bindIconDrag(icon) {
+    icon.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+      }
+      const startX = event.clientX;
+      const startY = event.clientY;
+      let moved = false;
+      icon.setPointerCapture(event.pointerId);
+
+      const onMove = (moveEvent) => {
+        if (!moved && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) > 6) {
+          moved = true;
+          icon.classList.add('dragging');
+          document.body.classList.add('taskbar-reordering');
+        }
+        if (!moved) {
+          return;
+        }
+        const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest('.desktop-icon');
+        if (!target || target === icon) {
+          return;
+        }
+        const targetRect = target.getBoundingClientRect();
+        const before =
+          moveEvent.clientX - targetRect.left - targetRect.width / 2 +
+            moveEvent.clientY - targetRect.top - targetRect.height / 2 < 0;
+        if (before) {
+          container.insertBefore(icon, target);
+        } else {
+          container.insertBefore(icon, target.nextSibling);
+        }
+      };
+
+      const onUp = (upEvent) => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        icon.classList.remove('dragging');
+        document.body.classList.remove('taskbar-reordering');
+        if (moved) {
+          const dropElement = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+          if (dropElement?.closest('.taskbar')) {
+            removeFromDesktop(icon.dataset.app);
+          } else {
+            persistDesktopApps();
+          }
+          window.addEventListener('click', suppressClickAfterDrag, { capture: true, once: true });
+        }
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp, { once: true });
+    });
+  }
+
+  function addToDesktop(appId) {
+    if (container.querySelector(`.desktop-icon[data-app="${appId}"]`)) {
+      return;
+    }
+    const icon = buildIcon(appId);
+    container.append(icon);
+    bindIconDrag(icon);
+    persistDesktopApps();
+  }
+
+  function removeFromDesktop(appId) {
+    const icon = container.querySelector(`.desktop-icon[data-app="${appId}"]`);
+    if (!icon) {
+      return;
+    }
+    icon.remove();
+    persistDesktopApps();
+  }
+
+  desktopShortcuts.container = container;
+  desktopShortcuts.add = addToDesktop;
+  desktopShortcuts.remove = removeFromDesktop;
+  desktopShortcuts.has = (appId) => Boolean(container.querySelector(`.desktop-icon[data-app="${appId}"]`));
+
+  readDesktopApps().forEach((appId) => {
+    const icon = buildIcon(appId);
+    container.append(icon);
+    bindIconDrag(icon);
   });
 }
 

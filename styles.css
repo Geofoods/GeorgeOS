@@ -319,6 +319,11 @@ body::before {
   position: absolute;
   inset: 0;
   z-index: 5;
+  pointer-events: none;
+}
+
+.window-layer .app-window {
+  pointer-events: auto;
 }
 
 .workspace-pill {
@@ -693,6 +698,139 @@ body::before {
 
 body.taskbar-reordering .taskbar-app {
   transition: none;
+}
+
+.desktop-icons {
+  position: absolute;
+  top: 58px;
+  left: 12px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 96px);
+  justify-content: start;
+  align-content: start;
+  column-gap: 6px;
+  row-gap: 8px;
+  min-width: 198px;
+  min-height: 104px;
+  padding: 6px;
+  border: 1.5px dashed transparent;
+  border-radius: 16px;
+  pointer-events: none;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+body.taskbar-reordering .desktop-icons {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.desktop-icon {
+  width: 96px;
+  height: 104px;
+  padding: 8px 4px 6px;
+  border: 0;
+  border-radius: 14px;
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  justify-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.desktop-icon:active {
+  cursor: grabbing;
+}
+
+.desktop-icon img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+
+.desktop-icon-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  max-width: 88px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  align-self: start;
+}
+
+.desktop-icon:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.desktop-icon:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 2px;
+}
+
+.desktop-icon.dragging {
+  opacity: 0.45;
+  transform: scale(1.04);
+}
+
+body.taskbar-reordering .desktop-icon {
+  transition: none;
+}
+
+body.taskbar-reordering .desktop-icon:hover {
+  transform: none;
+}
+
+html[data-theme="windows11"] .desktop-icon {
+  border-radius: 6px;
+}
+
+html[data-theme="windows11"] .desktop-icon:hover,
+html[data-theme="windows11"] .desktop-icon:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  transform: none;
+}
+
+html[data-theme="windows11"] .desktop-icon-label {
+  font-size: 0.74rem;
+  font-weight: 500;
+}
+
+html[data-theme="windowsxp"] .desktop-icon {
+  border-radius: 2px;
+}
+
+html[data-theme="windowsxp"] .desktop-icon:hover,
+html[data-theme="windowsxp"] .desktop-icon:focus-visible {
+  background: rgba(4, 120, 248, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.65);
+  transform: none;
+}
+
+html[data-theme="windowsxp"] .desktop-icon img {
+  filter: none;
+}
+
+html[data-theme="windowsxp"] .desktop-icon-label {
+  font-weight: 400;
 }
 
 .taskbar-app span {
