@@ -225,6 +225,72 @@ body::before {
   background: url("IMG_9084.jpg") center center / cover no-repeat;
 }
 
+.desktop-wallpaper.animated-space {
+  background:
+    radial-gradient(5px 5px at 20% 30%, rgba(255, 255, 255, 0.95), transparent 60%),
+    radial-gradient(4px 4px at 40% 10%, rgba(255, 255, 255, 0.8), transparent 60%),
+    radial-gradient(6px 6px at 60% 25%, rgba(255, 255, 255, 0.9), transparent 60%),
+    radial-gradient(5px 5px at 75% 40%, rgba(255, 255, 255, 0.95), transparent 60%),
+    radial-gradient(4px 4px at 90% 15%, rgba(255, 255, 255, 0.8), transparent 60%),
+    radial-gradient(6px 6px at 10% 60%, rgba(255, 255, 255, 0.9), transparent 60%),
+    radial-gradient(5px 5px at 30% 75%, rgba(255, 255, 255, 0.95), transparent 60%),
+    radial-gradient(4px 4px at 50% 65%, rgba(255, 255, 255, 0.8), transparent 60%),
+    radial-gradient(6px 6px at 65% 80%, rgba(255, 255, 255, 0.9), transparent 60%),
+    radial-gradient(5px 5px at 85% 70%, rgba(255, 255, 255, 0.95), transparent 60%),
+    radial-gradient(4px 4px at 8% 15%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(4px 4px at 28% 45%, rgba(214, 222, 255, 0.75), transparent 60%),
+    radial-gradient(4px 4px at 45% 88%, rgba(255, 255, 255, 0.8), transparent 60%),
+    radial-gradient(4px 4px at 58% 12%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(4px 4px at 80% 55%, rgba(214, 222, 255, 0.75), transparent 60%),
+    radial-gradient(4px 4px at 95% 38%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(5px 5px at 33% 20%, rgba(255, 255, 255, 0.75), transparent 70%),
+    radial-gradient(5px 5px at 70% 60%, rgba(255, 255, 255, 0.65), transparent 70%),
+    radial-gradient(5px 5px at 15% 82%, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(6px 6px at 55% 35%, rgba(190, 210, 255, 0.7), transparent 70%),
+    radial-gradient(6px 6px at 88% 85%, rgba(255, 255, 255, 0.65), transparent 70%),
+    radial-gradient(6px 6px at 5% 40%, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(5px 5px at 68% 5%, rgba(214, 222, 255, 0.7), transparent 70%),
+    radial-gradient(ellipse at 50% 100%, #2c1b5e 0%, transparent 55%),
+    radial-gradient(ellipse at 72% 15%, #7a3ad1 0%, transparent 45%),
+    radial-gradient(ellipse at 20% 25%, #1d3f9e 0%, transparent 50%),
+    linear-gradient(180deg, #05060f 0%, #181a3d 55%, #0a0a1c 100%);
+  background-size: 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 200vw 200vh, 150% 150%, 150% 150%, 150% 150%, 100% 100%;
+  animation:
+    space-drift 30s ease-in-out infinite alternate,
+    space-twinkle 2.6s ease-in-out infinite;
+}
+
+.desktop-wallpaper.animated-space::before,
+.desktop-wallpaper.animated-space::after {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes space-drift {
+  0% {
+    background-position:
+      0% 0%, 10% 20%, 20% 30%, 30% 10%, 40% 40%, 50% 20%, 60% 30%, 70% 50%, 80% 20%, 90% 40%,
+      5% 25%, 15% 55%, 25% 35%, 35% 65%, 45% 20%, 55% 75%, 65% 40%, 75% 60%, 85% 25%, 95% 55%,
+      8% 45%, 18% 70%, 28% 15%, 0% 0%, 0% 0%, 0% 0%, 0% 0%;
+  }
+  100% {
+    background-position:
+      -15% 10%, -5% 30%, 5% 40%, 15% 20%, 25% 50%, 35% 30%, 45% 40%, 55% 60%, 65% 30%, 75% 50%,
+      -10% 35%, 0% 65%, 10% 45%, 20% 75%, 30% 30%, 40% 85%, 50% 50%, 60% 70%, 70% 35%, 80% 65%,
+      -7% 55%, 3% 80%, 13% 25%, 0% 0%, 0% 0%, 0% 0%, 0% 0%;
+  }
+}
+
+@keyframes space-twinkle {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .desktop-wallpaper::before {
   background: linear-gradient(180deg, rgba(20, 35, 58, 0.08), rgba(8, 15, 28, 0.22));
   opacity: 0.55;

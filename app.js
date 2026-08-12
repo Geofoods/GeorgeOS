@@ -191,6 +191,54 @@ const weatherCodeMap = new Map([
   [99, { label: 'Thunderstorm', icon: '⛈' }],
 ]);
 
+const SPACE_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <radialGradient id="space-bg" cx="50%" cy="42%" r="80%">
+      <stop offset="0%" stop-color="#232c66"/>
+      <stop offset="55%" stop-color="#101852"/>
+      <stop offset="100%" stop-color="#04050f"/>
+    </radialGradient>
+    <radialGradient id="space-nebula" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7a3ad1" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#7a3ad1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="space-planet" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffe2b0"/>
+      <stop offset="55%" stop-color="#e08539"/>
+      <stop offset="100%" stop-color="#8a3c14"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#space-bg)"/>
+  <ellipse cx="1250" cy="560" rx="520" ry="300" fill="url(#space-nebula)"/>
+  <circle cx="1180" cy="280" r="150" fill="url(#space-planet)"/>
+  <ellipse cx="1180" cy="280" rx="250" ry="40" fill="none" stroke="#f7d9a6" stroke-width="10" opacity="0.85" transform="rotate(-18 1180 280)"/>
+  <ellipse cx="1180" cy="280" rx="250" ry="40" fill="none" stroke="#b06a2c" stroke-width="3" opacity="0.6" transform="rotate(-18 1180 280)"/>
+  <circle cx="90" cy="120" r="2" fill="#ffffff"/>
+  <circle cx="300" cy="70" r="1.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="520" cy="180" r="2.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="760" cy="60" r="1.5" fill="#ffffff" opacity="0.9"/>
+  <circle cx="980" cy="150" r="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="1150" cy="60" r="1.5" fill="#ffffff" opacity="0.85"/>
+  <circle cx="1380" cy="160" r="2" fill="#ffffff" opacity="0.8"/>
+  <circle cx="1500" cy="50" r="1.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="180" cy="320" r="1.5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="420" cy="420" r="2" fill="#ffffff" opacity="0.85"/>
+  <circle cx="680" cy="300" r="1.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="900" cy="430" r="2" fill="#ffffff" opacity="0.75"/>
+  <circle cx="260" cy="600" r="1.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="500" cy="700" r="2" fill="#ffffff" opacity="0.65"/>
+  <circle cx="740" cy="590" r="1.5" fill="#ffffff" opacity="0.85"/>
+  <circle cx="1020" cy="720" r="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="1300" cy="800" r="1.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="1480" cy="640" r="2" fill="#ffffff" opacity="0.75"/>
+  <circle cx="160" cy="850" r="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="600" cy="920" r="1.5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="1080" cy="900" r="2" fill="#ffffff" opacity="0.8"/>
+</svg>`;
+const SPACE_IMAGE_SRC = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(SPACE_SVG)}`;
+const SPACE_PHOTO = { src: SPACE_IMAGE_SRC, title: 'Space', animated: true };
+
 const photoLibrary = [
   { src: 'IMG_9084.jpg', title: 'Photo 1' },
   { src: 'IMG_7691.jpg', title: 'Photo 2' },
@@ -198,6 +246,7 @@ const photoLibrary = [
   { src: 'IMG_8025.jpg', title: 'Photo 4' },
   { src: 'IMG_7942.jpg', title: 'Photo 5' },
   { src: 'IMG_7477.jpg', title: 'Photo 6' },
+  SPACE_PHOTO,
 ];
 
 const capturedPhotos = [];
@@ -1123,6 +1172,7 @@ function buildPhotosApp(windowElement) {
   const uploadButton = shell.querySelector('.photos-upload');
   const fileInput = shell.querySelector('.photos-file');
   const wallpaperElement = document.querySelector('.desktop-wallpaper');
+  let selectedPhoto = null;
 
   uploadButton.addEventListener('click', () => {
     fileInput.click();
@@ -1187,6 +1237,7 @@ function buildPhotosApp(windowElement) {
       button.addEventListener('click', () => {
         heroImage.src = photo.src;
         heroImage.alt = photo.title;
+        selectedPhoto = photo;
         photoGrid.querySelectorAll('.photos-thumb').forEach((thumb) => thumb.classList.remove('active'));
         button.classList.add('active');
       });
@@ -1196,7 +1247,13 @@ function buildPhotosApp(windowElement) {
   }
 
   wallpaperBtn.addEventListener('click', () => {
-    wallpaperElement.style.backgroundImage = `url("${heroImage.src}")`;
+    if (selectedPhoto === SPACE_PHOTO) {
+      wallpaperElement.classList.add('animated-space');
+      wallpaperElement.style.backgroundImage = '';
+    } else {
+      wallpaperElement.classList.remove('animated-space');
+      wallpaperElement.style.backgroundImage = `url("${heroImage.src}")`;
+    }
   });
 
   windowElement._refreshPhotos = render;
