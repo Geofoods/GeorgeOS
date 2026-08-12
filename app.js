@@ -120,6 +120,81 @@ function showVoiceOverlay() {
   }, 3200);
 }
 
+const voiceAppNames = [
+  { id: 'calculator', names: ['calculator', 'calc'] },
+  { id: 'photos', names: ['photos', 'photo gallery', 'pictures'] },
+  { id: 'paint', names: ['paint'] },
+  { id: 'weather', names: ['weather'] },
+  { id: 'camera', names: ['camera'] },
+  { id: 'mail', names: ['mail', 'email', 'gmail'] },
+  { id: 'projects', names: ['projects', 'github'] },
+  { id: 'holy-moly', names: ['holy moly'] },
+  { id: 'linkedin', names: ['linkedin'] },
+  { id: 'youtube', names: ['youtube'] },
+  { id: 'instagram', names: ['instagram', 'insta'] },
+  { id: 'system-breach', names: ['system breach'] },
+  { id: 'customize', names: ['customization', 'customize', 'settings', 'appearance'] },
+];
+
+let voiceUtterance = '';
+let voiceLastCommandTime = 0;
+
+function normalizeVoiceText(text) {
+  return text
+    .toLowerCase()
+    .replace(/[.,!?'"]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function openAppFromVoice(commandText) {
+  if (!/\bopen\b/.test(commandText)) {
+    return;
+  }
+  for (const app of voiceAppNames) {
+    if (app.names.some((name) => commandText.includes(name))) {
+      const now = Date.now();
+      if (now - voiceLastCommandTime > 2500) {
+        voiceLastCommandTime = now;
+        openApp(app.id);
+      }
+      return;
+    }
+  }
+}
+
+function processVoiceUtterance(transcript) {
+  const normalized = normalizeVoiceText(transcript);
+  const wakeIndex = normalized.search(/\bhey george\b/);
+  if (wakeIndex === -1) {
+    return;
+  }
+
+  showVoiceOverlay();
+
+  const commandText = normalized.slice(wakeIndex + 'hey george'.length);
+  openAppFromVoice(commandText);
+}
+
+function handleVoiceResult(event) {
+  const newest = event.results[event.results.length - 1];
+  if (!newest) {
+    return;
+  }
+
+  if (!newest.isFinal) {
+    voiceUtterance = newest[0].transcript;
+  }
+
+  if (voiceUtterance) {
+    processVoiceUtterance(voiceUtterance);
+  }
+
+  if (newest.isFinal) {
+    voiceUtterance = '';
+  }
+}
+
 function startVoiceListener() {
   if (voiceRecognition) {
     return;
