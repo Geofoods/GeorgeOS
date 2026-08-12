@@ -101,6 +101,79 @@ window.__georgeosToggleMute = () => {
   return muted;
 };
 
+const voiceOverlay = document.querySelector('#voice-overlay');
+let voiceRecognition = null;
+let voiceHideTimer = null;
+
+function showVoiceOverlay() {
+  if (!voiceOverlay) {
+    return;
+  }
+  voiceOverlay.classList.remove('hide');
+  voiceOverlay.hidden = false;
+  window.clearTimeout(voiceHideTimer);
+  voiceHideTimer = window.setTimeout(() => {
+    voiceOverlay.classList.add('hide');
+    window.setTimeout(() => {
+      voiceOverlay.hidden = true;
+    }, 450);
+  }, 3200);
+}
+
+function startVoiceListener() {
+  if (voiceRecognition) {
+    return;
+  }
+
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognitionAPI) {
+    return;
+  }
+
+  let running = false;
+
+  const start = () => {
+    if (!running) {
+      return;
+    }
+    try {
+      voiceRecognition.start();
+    } catch {
+      window.setTimeout(start, 250);
+    }
+  };
+
+  try {
+    voiceRecognition = new SpeechRecognitionAPI();
+  } catch {
+    voiceRecognition = null;
+    return;
+  }
+
+  running = true;
+  voiceRecognition.continuous = true;
+  voiceRecognition.interimResults = true;
+  voiceRecognition.lang = 'en-US';
+
+  voiceRecognition.onresult = handleVoiceResult;
+
+  voiceRecognition.onerror = (event) => {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      running = false;
+    }
+  };
+
+  voiceRecognition.onend = () => {
+    if (running) {
+      window.setTimeout(start, 250);
+    }
+  };
+
+  start();
+}
+
+document.addEventListener('pointerdown', startVoiceListener, { once: true });
+
 const themeOptions = [
   { id: 'macos', label: 'macOS' },
   { id: 'windows11', label: 'Windows 11' },
