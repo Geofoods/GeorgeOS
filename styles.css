@@ -660,6 +660,9 @@ body::before {
   width: var(--georgeos-icon-size);
   height: var(--georgeos-icon-size);
   display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
 }
 
 .taskbar-app:hover {
@@ -669,6 +672,27 @@ body::before {
 
 .taskbar-app.active {
   box-shadow: inset 0 0 0 2px rgba(14, 146, 255, 0.55), 0 10px 20px rgba(0, 0, 0, 0.14);
+}
+
+.taskbar-app {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.taskbar-app:active {
+  cursor: grabbing;
+}
+
+.taskbar-app.dragging {
+  opacity: 0.45;
+  transform: scale(1.05);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+}
+
+body.taskbar-reordering .taskbar-app {
+  transition: none;
 }
 
 .taskbar-app span {

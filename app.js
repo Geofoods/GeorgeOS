@@ -209,6 +209,8 @@ function handleVoiceResult(event) {
     return;
   }
 
+  console.log('[voice] result (final=' + newest.isFinal + '):', JSON.stringify(newest[0].transcript));
+
   voiceUtterance = newest[0].transcript;
 
   if (voiceUtterance) {
@@ -227,6 +229,7 @@ function startVoiceListener() {
 
   const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognitionAPI) {
+    console.warn('[voice] NOT SUPPORTED — no SpeechRecognition API. Need Chrome/Edge in a secure context (https or localhost).');
     return;
   }
 
@@ -238,14 +241,16 @@ function startVoiceListener() {
     }
     try {
       voiceRecognition.start();
-    } catch {
-      window.setTimeout(start, 250);
+    } catch (error) {
+      console.warn('[voice] start() threw:', error.message);
+      window.setTimeout(start, 500);
     }
   };
 
   try {
     voiceRecognition = new SpeechRecognitionAPI();
-  } catch {
+  } catch (error) {
+    console.warn('[voice] constructor threw:', error.message);
     voiceRecognition = null;
     return;
   }
@@ -254,6 +259,10 @@ function startVoiceListener() {
   voiceRecognition.continuous = true;
   voiceRecognition.interimResults = true;
   voiceRecognition.lang = 'en-US';
+
+  voiceRecognition.onstart = () => {
+    console.log('[voice] recognition started — say "hey george"');
+  };
 
   voiceRecognition.onresult = handleVoiceResult;
 
@@ -280,6 +289,7 @@ function startVoiceListener() {
   };
 
   voiceRecognition.onend = () => {
+    console.log('[voice] session ended, restarting');
     if (running) {
       window.setTimeout(start, 250);
     }
@@ -288,18 +298,19 @@ function startVoiceListener() {
   start();
 }
 
-function attemptVoiceStart() {
+function attemptVoiceStart(source) {
   if (!voiceRecognition) {
+    console.log(`[voice] attempting start (${source})`);
     startVoiceListener();
   }
 }
 
-document.addEventListener('pointerdown', attemptVoiceStart);
+document.addEventListener('pointerdown', () => attemptVoiceStart('pointerdown'));
 window.addEventListener('DOMContentLoaded', () => {
-  window.setTimeout(attemptVoiceStart, 800);
+  window.setTimeout(() => attemptVoiceStart('DOMContentLoaded'), 800);
 });
 if (document.readyState !== 'loading') {
-  window.setTimeout(attemptVoiceStart, 800);
+  window.setTimeout(() => attemptVoiceStart('ready'), 800);
 }
 
 const themeOptions = [
@@ -681,6 +692,125 @@ taskbarButtons.forEach((button) => {
     openApp(button.dataset.app);
   });
 });
+
+setupTaskbarReorder();
+
+function setupTaskbarReorder() {
+  const taskbar = document.querySelector('.taskbar');
+  if (!taskbar) {
+    return;
+  }
+
+  taskbar.querySelectorAll('img').forEach((image) => {
+    image.draggable = false;
+  });
+
+  function readStoredOrder() {
+    try {
+      const stored = JSON.parse(localStorage.getItem('georgeos-taskbar-order') || '[]');
+      return Array.isArray(stored) ? stored : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function persistOrder() {
+    const order = [...taskbar.querySelectorAll('.taskbar-app')].map((button) => button.dataset.app);
+    try {
+      localStorage.setItem('georgeos-taskbar-order', JSON.stringify(order));
+    } catch {
+      // storage unavailable; order is session-only
+    }
+  }
+
+  const currentApps = () => [...taskbar.querySelectorAll('.taskbar-app')];
+
+  const storedOrder = readStoredOrder();
+  if (storedOrder.length) {
+    const known = new Set(currentApps().map((button) => button.dataset.app));
+    const order = storedOrder.filter((app) => known.has(app));
+    currentApps().forEach((button) => {
+      if (!order.includes(button.dataset.app)) {
+        order.push(button.dataset.app);
+      }
+    });
+    order.forEach((app) => {
+      const button = taskbar.querySelector(`.taskbar-app[data-app="${app}"]`);
+      if (button) {
+        taskbar.append(button);
+      }
+    });
+  }
+
+  let dragButton = null;
+  let startX = 0;
+  let startY = 0;
+  let moved = false;
+
+  function onMove(event) {
+    if (!dragButton) {
+      return;
+    }
+    if (!moved && Math.hypot(event.clientX - startX, event.clientY - startY) > 6) {
+      moved = true;
+      dragButton.classList.add('dragging');
+      document.body.classList.add('taskbar-reordering');
+    }
+    if (!moved) {
+      return;
+    }
+
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.taskbar-app');
+    if (!target || target === dragButton) {
+      return;
+    }
+
+    const targetRect = target.getBoundingClientRect();
+    if (event.clientX < targetRect.left + targetRect.width / 2) {
+      taskbar.insertBefore(dragButton, target);
+    } else {
+      taskbar.insertBefore(dragButton, target.nextSibling);
+    }
+  }
+
+  function onUp() {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    if (dragButton) {
+      dragButton.classList.remove('dragging');
+    }
+    document.body.classList.remove('taskbar-reordering');
+    if (moved) {
+      persistOrder();
+      window.addEventListener('click', suppressClick, { capture: true, once: true });
+    }
+    dragButton = null;
+    moved = false;
+  }
+
+  function suppressClick(event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  currentApps().forEach((button) => {
+    button.addEventListener('pointerdown', (event) => {
+      if (dragButton) {
+        return;
+      }
+      if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+      }
+      dragButton = button;
+      startX = event.clientX;
+      startY = event.clientY;
+      moved = false;
+      button.setPointerCapture(event.pointerId);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp, { once: true });
+    });
+  });
+}
 
 workspacePill.addEventListener('click', () => {
   showDesktop();
