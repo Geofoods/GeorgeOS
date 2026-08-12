@@ -433,30 +433,22 @@ window.addEventListener('keydown', (event) => {
   if (isWorkspaceShortcut(event)) {
     event.preventDefault();
     const target = workspaceForShortcut(event.key);
-    if (event.key === 'Meta' || event.key === 'F2') {
-      toggleOverview();
-    } else {
-      if (overviewOpen) {
-        closeOverview();
-      }
-      switchWorkspace(target);
+    if (overviewOpen) {
+      closeOverview();
     }
+    switchWorkspace(target);
   }
 });
 
 function isWorkspaceShortcut(event) {
   const isModifier = event.ctrlKey && event.altKey;
-  if (isModifier) {
-    return ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '1', '2', '3', '4'].includes(event.key);
-  }
-  return event.key === 'Meta' || event.key === 'F2';
+  return (
+    isModifier &&
+    ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '1', '2', '3', '4'].includes(event.key)
+  );
 }
 
 function workspaceForShortcut(key) {
-  if (key === 'Meta' || key === 'F2') {
-    return -1;
-  }
-
   if (key === '1' || key === '2' || key === '3' || key === '4') {
     return Number(key) - 1;
   }
