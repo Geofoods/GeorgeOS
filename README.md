@@ -3,6 +3,10 @@
 GeorgeOS is an operating system that comes with numerous app which focuses on customizability
 
 
+<img width="1563" height="842" alt="Screenshot 2026-08-12 105106" src="https://github.com/user-attachments/assets/94c04874-8731-47e6-a73d-2c02181b877d" />
+<img width="1578" height="681" alt="Screenshot 2026-08-12 113012" src="https://github.com/user-attachments/assets/8e13ee75-0c2b-46d7-b121-8ea2cdfa830f" />
+
+
 ## Features
 
 - **Lock screen** - Live date and time with an enter button to unlock to the desktop
