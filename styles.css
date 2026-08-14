@@ -329,8 +329,8 @@ body::before {
 .workspace-pill {
   position: absolute;
   bottom: 10px;
-  left: 10px;
-  z-index: 6;
+  right: 10px;
+  z-index: 60;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2070,6 +2070,19 @@ html[data-theme="windows11"] .taskbar-app.active::after {
   background: rgba(255, 255, 255, 0.85);
 }
 
+html[data-theme="windows11"] .workspace-pill {
+  background: rgba(31, 33, 50, 0.84);
+  backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="windows11"] .workspace-pill:hover {
+  background: rgba(41, 43, 60, 0.9);
+}
+
 html[data-theme="windows11"] .app-window {
   border-radius: 8px;
   background: rgba(28, 30, 42, 0.94);
@@ -2168,6 +2181,21 @@ html[data-theme="windowsxp"] .taskbar-app:hover {
 html[data-theme="windowsxp"] .taskbar-app.active {
   background: linear-gradient(180deg, #0a3d9e 0%, #1b62da 50%, #2b72e0 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="windowsxp"] .workspace-pill {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #6fb0f4 0%, #2f7fe0 50%, #1a5fd0 100%);
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset -1px 0 0 rgba(0, 0, 0, 0.2),
+    0 8px 18px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="windowsxp"] .workspace-pill:hover {
+  background: linear-gradient(180deg, #7bb8ff 0%, #3f8cf0 50%, #2569dd 100%);
 }
 
 html[data-theme="windowsxp"] .app-window {
