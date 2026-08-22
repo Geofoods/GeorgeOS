@@ -13,6 +13,18 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="boot-overlay" id="boot-overlay" aria-hidden="true">
+      <div class="boot-stars"></div>
+      <div class="boot-core">
+        <div class="boot-halo"></div>
+        <p class="boot-logo">
+          <span style="--i: 0">G</span><span style="--i: 1">e</span><span style="--i: 2">o</span><span style="--i: 3">r</span><span style="--i: 4">g</span><span style="--i: 5">e</span><span style="--i: 6">O</span><span style="--i: 7">S</span>
+        </p>
+        <div class="boot-progress"><span></span></div>
+        <p class="boot-caption">Starting<i>.</i><i>.</i><i>.</i></p>
+      </div>
+      <div class="boot-flash"></div>
+    </div>
     <main class="scene" aria-label="Welcome screen">
       <section class="view welcome-view" aria-label="Lock screen">
         <div class="welcome-clock" aria-live="polite">
@@ -32,7 +44,26 @@
             <div class="notch"></div>
             <div class="screen">
               <div class="desktop-wallpaper"></div>
-              <div id="clock" class="desktop-clock" aria-label="Current time">9:41 AM</div>
+              <aside class="desktop-widgets" aria-label="Desktop widgets">
+                <section class="widget widget-clock" aria-label="Current time">
+                  <p id="clock" class="widget-clock-time">9:41 AM</p>
+                  <p id="widget-date" class="widget-clock-date">Friday, August 21</p>
+                  <svg id="analog-clock" class="widget-analog-clock" viewBox="0 0 100 100" aria-hidden="true">
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
+                    <line id="analog-hour" x1="50" y1="50" x2="50" y2="30" stroke="rgba(255,255,255,0.92)" stroke-width="3.5" stroke-linecap="round" />
+                    <line id="analog-minute" x1="50" y1="50" x2="50" y2="16" stroke="rgba(255,255,255,0.92)" stroke-width="2.5" stroke-linecap="round" />
+                    <line id="analog-second" x1="50" y1="50" x2="50" y2="12" stroke="rgba(14,146,255,0.9)" stroke-width="1.2" stroke-linecap="round" />
+                    <circle cx="50" cy="50" r="2.5" fill="rgba(255,255,255,0.92)" />
+                  </svg>
+                </section>
+                <section class="widget widget-calendar" aria-label="Calendar">
+                  <header class="widget-calendar-header">
+                    <span id="calendar-month" class="widget-calendar-month">August</span>
+                    <span id="calendar-year" class="widget-calendar-year">2026</span>
+                  </header>
+                  <div id="calendar-grid" class="widget-calendar-grid"></div>
+                </section>
+              </aside>
 
               <button class="workspace-pill" type="button" aria-label="Open workspaces overview" aria-haspopup="true">
                 <span class="workspace-pill-dots" aria-hidden="true"></span>
@@ -88,6 +119,14 @@
                 </button>
                 <button class="taskbar-app" type="button" data-app="customize" aria-label="Open Customization">
                   <img src="icons/customize-icon.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="taskbar-app taskbar-mic" id="mic-button" type="button" data-state="off" aria-label="Toggle voice commands" title="Voice commands (Chrome/Edge only)">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="1" width="6" height="12" rx="3" />
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+                    <line x1="12" y1="18" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                  </svg>
                 </button>
               </nav>
 

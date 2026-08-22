@@ -9,6 +9,7 @@ GeorgeOS is an operating system that comes with numerous app which focuses on cu
 
 ## Features
 
+- **Boot animation** - Animated startup sequence with a glowing logo, loading bar, and light flash into the lock screen
 - **Lock screen** - Live date and time with an enter button to unlock to the desktop
 - **Desktop shell** - Wallpaper, status clock, and a desktop workspace switcher
 - **Window manager** - Draggable, resizable, focusable, closable apps with title bars and fullscreen support

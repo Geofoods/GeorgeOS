@@ -14,6 +14,18 @@ const workspacePill = document.querySelector('.workspace-pill');
 const workspacePillDots = document.querySelector('.workspace-pill-dots');
 const workspacePillLabel = document.querySelector('.workspace-pill-label');
 const desktopWallpaperElement = document.querySelector('.desktop-wallpaper');
+const widgetDateElement = document.querySelector('#widget-date');
+const calendarMonthElement = document.querySelector('#calendar-month');
+const calendarYearElement = document.querySelector('#calendar-year');
+const calendarGridElement = document.querySelector('#calendar-grid');
+const analogHourHand = document.querySelector('#analog-hour');
+const analogMinuteHand = document.querySelector('#analog-minute');
+const analogSecondHand = document.querySelector('#analog-second');
+
+const bootOverlayElement = document.getElementById('boot-overlay');
+if (bootOverlayElement) {
+  window.setTimeout(() => bootOverlayElement.remove(), 3600);
+}
 
 const WORKSPACE_COUNT = 4;
 const WORKSPACE_COLUMNS = 2;
@@ -471,6 +483,7 @@ function workspaceForShortcut(key) {
   }
 }
 
+let renderedCalendarKey = '';
 updateClock();
 setInterval(updateClock, 1000);
 
@@ -587,7 +600,7 @@ function setupTaskbarReorder() {
       persistOrder();
       const dropElement = document.elementFromPoint(event.clientX, event.clientY);
       if (dropElement?.closest('.screen') && !dropElement.closest('.taskbar, .window-layer, .overview')) {
-        desktopShortcuts.add(dragButton.dataset.app);
+        desktopShortcuts.add(dragButton.dataset.app, { clientX: event.clientX, clientY: event.clientY });
       }
       window.addEventListener('click', suppressClick, { capture: true, once: true });
     }
@@ -628,6 +641,9 @@ function setupDesktopIcons() {
 
   const taskbar = document.querySelector('.taskbar');
 
+  const ICON_WIDTH = 96;
+  const ICON_HEIGHT = 104;
+
   function readDesktopApps() {
     try {
       const stored = JSON.parse(localStorage.getItem('georgeos-desktop-apps') || '[]');
@@ -646,6 +662,57 @@ function setupDesktopIcons() {
     }
   }
 
+  function readStoredPositions() {
+    try {
+      const stored = JSON.parse(localStorage.getItem('georgeos-desktop-icon-positions') || '{}');
+      return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function persistIconPositions() {
+    const positions = {};
+    container.querySelectorAll('.desktop-icon').forEach((icon) => {
+      positions[icon.dataset.app] = {
+        x: Number.parseFloat(icon.style.left) || 0,
+        y: Number.parseFloat(icon.style.top) || 0,
+      };
+    });
+    try {
+      localStorage.setItem('georgeos-desktop-icon-positions', JSON.stringify(positions));
+    } catch {
+      // storage unavailable; positions are session-only
+    }
+  }
+
+  function clampPosition(x, y) {
+    const rect = screen.getBoundingClientRect();
+    return {
+      x: Math.min(Math.max(0, x), Math.max(0, rect.width - ICON_WIDTH)),
+      y: Math.min(Math.max(0, y), Math.max(0, rect.height - ICON_HEIGHT)),
+    };
+  }
+
+  function applyIconPosition(icon, x, y) {
+    const clamped = clampPosition(x, y);
+    icon.style.left = `${clamped.x}px`;
+    icon.style.top = `${clamped.y}px`;
+  }
+
+  function defaultSlot(index) {
+    const rect = screen.getBoundingClientRect();
+    const startX = 18;
+    const startY = 64;
+    const stepX = ICON_WIDTH + 6;
+    const stepY = ICON_HEIGHT + 8;
+    const rows = Math.max(1, Math.floor((rect.height - startY - 16) / stepY));
+    const columns = Math.max(1, Math.floor((rect.width - startX - 16) / stepX));
+    const row = index % rows;
+    const column = Math.floor(index / rows) % columns;
+    return { x: startX + column * stepX, y: startY + row * stepY };
+  }
+
   function buildIcon(appId) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -662,6 +729,13 @@ function setupDesktopIcons() {
     return button;
   }
 
+  function elementUnderPoint(x, y, exclude) {
+    return (
+      document.elementsFromPoint(x, y).find((element) => !exclude.some((ignored) => ignored.contains(element))) ||
+      null
+    );
+  }
+
   function bindIconDrag(icon) {
     icon.addEventListener('pointerdown', (event) => {
       if (event.pointerType === 'mouse' && event.button !== 0) {
@@ -670,30 +744,28 @@ function setupDesktopIcons() {
       const startX = event.clientX;
       const startY = event.clientY;
       let moved = false;
+      let grabOffsetX = 0;
+      let grabOffsetY = 0;
       icon.setPointerCapture(event.pointerId);
 
       const onMove = (moveEvent) => {
-        if (!moved && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) > 6) {
+        if (!moved) {
+          if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) <= 6) {
+            return;
+          }
           moved = true;
+          const rect = icon.getBoundingClientRect();
+          grabOffsetX = startX - rect.left;
+          grabOffsetY = startY - rect.top;
           icon.classList.add('dragging');
           document.body.classList.add('taskbar-reordering');
         }
-        if (!moved) {
-          return;
-        }
-        const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest('.desktop-icon');
-        if (!target || target === icon) {
-          return;
-        }
-        const targetRect = target.getBoundingClientRect();
-        const before =
-          moveEvent.clientX - targetRect.left - targetRect.width / 2 +
-            moveEvent.clientY - targetRect.top - targetRect.height / 2 < 0;
-        if (before) {
-          container.insertBefore(icon, target);
-        } else {
-          container.insertBefore(icon, target.nextSibling);
-        }
+        const rect = screen.getBoundingClientRect();
+        applyIconPosition(
+          icon,
+          moveEvent.clientX - rect.left - grabOffsetX,
+          moveEvent.clientY - rect.top - grabOffsetY,
+        );
       };
 
       const onUp = (upEvent) => {
@@ -702,11 +774,11 @@ function setupDesktopIcons() {
         icon.classList.remove('dragging');
         document.body.classList.remove('taskbar-reordering');
         if (moved) {
-          const dropElement = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+          const dropElement = elementUnderPoint(upEvent.clientX, upEvent.clientY, [icon]);
           if (dropElement?.closest('.taskbar')) {
             removeFromDesktop(icon.dataset.app);
           } else {
-            persistDesktopApps();
+            persistIconPositions();
           }
           window.addEventListener('click', suppressClickAfterDrag, { capture: true, once: true });
         }
@@ -717,13 +789,24 @@ function setupDesktopIcons() {
     });
   }
 
-  function addToDesktop(appId) {
+  function addToDesktop(appId, dropPoint = null) {
     if (container.querySelector(`.desktop-icon[data-app="${appId}"]`)) {
       return;
     }
     const icon = buildIcon(appId);
-    container.append(icon);
     bindIconDrag(icon);
+    const fallback = defaultSlot(container.querySelectorAll('.desktop-icon').length);
+    container.append(icon);
+
+    let x = fallback.x;
+    let y = fallback.y;
+    if (dropPoint) {
+      const rect = screen.getBoundingClientRect();
+      x = dropPoint.clientX - rect.left - ICON_WIDTH / 2;
+      y = dropPoint.clientY - rect.top - ICON_HEIGHT / 2;
+    }
+    applyIconPosition(icon, x, y);
+    persistIconPositions();
     persistDesktopApps();
   }
 
@@ -733,6 +816,7 @@ function setupDesktopIcons() {
       return;
     }
     icon.remove();
+    persistIconPositions();
     persistDesktopApps();
   }
 
@@ -741,10 +825,25 @@ function setupDesktopIcons() {
   desktopShortcuts.remove = removeFromDesktop;
   desktopShortcuts.has = (appId) => Boolean(container.querySelector(`.desktop-icon[data-app="${appId}"]`));
 
-  readDesktopApps().forEach((appId) => {
+  const storedPositions = readStoredPositions();
+  readDesktopApps().forEach((appId, index) => {
     const icon = buildIcon(appId);
-    container.append(icon);
     bindIconDrag(icon);
+    container.append(icon);
+    const fallback = defaultSlot(index);
+    const storedX = Number(storedPositions[appId]?.x);
+    const storedY = Number(storedPositions[appId]?.y);
+    applyIconPosition(
+      icon,
+      Number.isFinite(storedX) ? storedX : fallback.x,
+      Number.isFinite(storedY) ? storedY : fallback.y,
+    );
+  });
+
+  window.addEventListener('resize', () => {
+    container.querySelectorAll('.desktop-icon').forEach((icon) => {
+      applyIconPosition(icon, Number.parseFloat(icon.style.left) || 0, Number.parseFloat(icon.style.top) || 0);
+    });
   });
 }
 
@@ -1223,6 +1322,48 @@ function selectWorkspaceFromOverview(workspace, focusWindow = false) {
   switchWorkspace(workspace);
 }
 
+function renderCalendar(now) {
+  if (!calendarGridElement || !calendarMonthElement || !calendarYearElement) {
+    return;
+  }
+
+  const key = `${now.getFullYear()}-${now.getMonth()}`;
+  if (renderedCalendarKey !== key) {
+    renderedCalendarKey = key;
+    calendarMonthElement.textContent = new Intl.DateTimeFormat([], { month: 'long' }).format(now);
+    calendarYearElement.textContent = String(now.getFullYear());
+    calendarGridElement.replaceChildren();
+
+    const weekdayFormatter = new Intl.DateTimeFormat([], { weekday: 'narrow' });
+    const weekAnchor = new Date(2023, 0, 1);
+    for (let day = 0; day < 7; day += 1) {
+      const label = document.createElement('span');
+      label.className = 'widget-calendar-cell widget-calendar-weekday';
+      label.textContent = weekdayFormatter.format(new Date(weekAnchor.getFullYear(), 0, weekAnchor.getDate() + day));
+      calendarGridElement.append(label);
+    }
+
+    const firstWeekday = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    for (let blank = 0; blank < firstWeekday; blank += 1) {
+      const spacer = document.createElement('span');
+      spacer.className = 'widget-calendar-cell widget-calendar-spacer';
+      calendarGridElement.append(spacer);
+    }
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const cell = document.createElement('span');
+      cell.className = 'widget-calendar-cell widget-calendar-day';
+      cell.textContent = String(day);
+      cell.dataset.day = String(day);
+      calendarGridElement.append(cell);
+    }
+  }
+
+  calendarGridElement.querySelectorAll('.widget-calendar-day').forEach((cell) => {
+    cell.classList.toggle('today', Number(cell.dataset.day) === now.getDate());
+  });
+}
+
 function updateClock() {
   const now = new Date();
 
@@ -1233,15 +1374,33 @@ function updateClock() {
     }).format(now);
   }
 
+  if (analogHourHand && analogMinuteHand && analogSecondHand) {
+    const h = now.getHours() % 12;
+    const m = now.getMinutes();
+    const s = now.getSeconds();
+    const ms = now.getMilliseconds();
+    analogHourHand.setAttribute('transform', `rotate(${h * 30 + m * 0.5} 50 50)`);
+    analogMinuteHand.setAttribute('transform', `rotate(${m * 6 + s * 0.1} 50 50)`);
+    analogSecondHand.setAttribute('transform', `rotate(${s * 6 + ms * 0.006} 50 50)`);
+  }
+
+  renderCalendar(now);
+
   if (!welcomeDateElement || !welcomeTimeElement) {
     return;
   }
 
-  welcomeDateElement.textContent = new Intl.DateTimeFormat([], {
+  const longDate = new Intl.DateTimeFormat([], {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   }).format(now);
+
+  welcomeDateElement.textContent = longDate;
+
+  if (widgetDateElement) {
+    widgetDateElement.textContent = longDate;
+  }
 
   const welcomeTime = new Intl.DateTimeFormat([], {
     hour: 'numeric',
@@ -1255,6 +1414,144 @@ function updateClock() {
     .trim();
 
   welcomeTimeElement.textContent = welcomeTime;
+}
+
+let voiceRecognition = null;
+let voiceToastTimer = null;
+
+const micButton = document.querySelector('#mic-button');
+
+function showToast(message) {
+  let toast = document.querySelector('.voice-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'voice-toast';
+    document.body.append(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('visible');
+  clearTimeout(voiceToastTimer);
+  voiceToastTimer = setTimeout(() => toast.classList.remove('visible'), 2200);
+}
+
+function handleVoiceCommand(transcript) {
+  const text = transcript.toLowerCase().trim();
+
+  const appAliases = {
+    calculator: 'calculator', calc: 'calculator',
+    photos: 'photos', photo: 'photos',
+    paint: 'paint', drawing: 'paint',
+    weather: 'weather',
+    camera: 'camera',
+    mail: 'mail', email: 'mail',
+    projects: 'projects', project: 'projects', github: 'projects',
+    'holy moly': 'holy-moly', holymoly: 'holy-moly',
+    linkedin: 'linkedin',
+    youtube: 'youtube',
+    instagram: 'instagram', insta: 'instagram',
+    'system breach': 'system-breach', systembreach: 'system-breach',
+    customize: 'customize', customization: 'customize', theme: 'customize', themes: 'customize',
+  };
+
+  const openMatch = text.match(/^(?:open|launch|start|show)\s+(.+)/);
+  const appGuess = openMatch ? openMatch[1] : text;
+
+  for (const [alias, appId] of Object.entries(appAliases)) {
+    if (appGuess.includes(alias)) {
+      showDesktop();
+      openApp(appId);
+      showToast(`Opening ${appId.replace('-', ' ')}`);
+      return;
+    }
+  }
+
+  if (text.includes('desktop') || text.includes('home screen')) {
+    showDesktop();
+    showToast('Showing desktop');
+    return;
+  }
+
+  if (text.includes('lock') || text.includes('welcome') || text.includes('go back') || text.includes('sign out')) {
+    showWelcome();
+    showToast('Locking screen');
+    return;
+  }
+
+  if (text.includes('overview') || text.includes('workspaces') || text.includes('workspace')) {
+    showDesktop();
+    openOverview();
+    showToast('Opening workspaces');
+    return;
+  }
+
+  if (text.includes('close overview') || text.includes('close workspaces')) {
+    closeOverview();
+    showToast('Closing overview');
+    return;
+  }
+
+  showToast(`Didn't understand: "${transcript}"`);
+}
+
+function toggleVoice() {
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognitionAPI) {
+    showToast('Voice not supported in this browser');
+    return;
+  }
+
+  if (micButton.dataset.state === 'on') {
+    micButton.dataset.state = 'off';
+    if (voiceRecognition) {
+      voiceRecognition.abort();
+      voiceRecognition = null;
+    }
+    showToast('Voice off');
+    return;
+  }
+
+  const recognition = new SpeechRecognitionAPI();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (event) => {
+    const last = event.results[event.results.length - 1];
+    if (last.isFinal) {
+      handleVoiceCommand(last[0].transcript);
+    }
+  };
+
+  recognition.onerror = (event) => {
+    if (event.error === 'no-speech' || event.error === 'aborted') return;
+    console.warn('Voice recognition error:', event.error);
+  };
+
+  recognition.onend = () => {
+    if (micButton.dataset.state === 'on' && voiceRecognition) {
+      try { recognition.start(); } catch (_) {}
+    }
+  };
+
+  voiceRecognition = recognition;
+
+  try {
+    recognition.start();
+    micButton.dataset.state = 'on';
+    showToast('Listening...');
+  } catch (_) {
+    showToast('Could not start voice recognition');
+  }
+}
+
+if (micButton) {
+  micButton.addEventListener('click', toggleVoice);
+  if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+    micButton.dataset.state = 'off';
+    micButton.title = 'Voice not supported in this browser';
+    micButton.style.opacity = '0.4';
+    micButton.style.cursor = 'not-allowed';
+  }
 }
 
 function buildCalculatorApp(windowElement) {

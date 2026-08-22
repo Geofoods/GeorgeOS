@@ -45,7 +45,7 @@ body::before {
 .view {
   position: absolute;
   inset: 0;
-  transition: opacity 420ms ease, transform 420ms ease;
+  transition: opacity 520ms ease, transform 520ms ease, filter 520ms ease;
 }
 
 .view[hidden] {
@@ -54,12 +54,13 @@ body::before {
 
 .desktop-view {
   opacity: 0;
-  transform: scale(1.015);
+  transform: scale(1.035);
 }
 
 .scene[data-view="desktop"] .welcome-view {
   opacity: 0;
-  transform: scale(0.985);
+  transform: scale(1.05);
+  filter: blur(10px);
   pointer-events: none;
 }
 
@@ -94,6 +95,7 @@ body::before {
   z-index: 2;
   text-align: center;
   color: rgba(255, 255, 255, 0.96);
+  animation: welcome-clock-enter 720ms cubic-bezier(0.22, 0.85, 0.3, 1) 2450ms backwards;
 }
 
 .welcome-date {
@@ -127,7 +129,7 @@ body::before {
   color: rgba(255, 255, 255, 0.96);
   box-shadow: none;
   backdrop-filter: none;
-  animation: none;
+  animation: welcome-button-enter 720ms cubic-bezier(0.22, 0.85, 0.3, 1) 2700ms backwards;
   transition: transform 180ms ease, opacity 180ms ease;
 }
 
@@ -303,16 +305,133 @@ body::before {
   animation: none;
 }
 
-.desktop-clock {
+.desktop-widgets {
   position: absolute;
   top: 10px;
   right: 12px;
   z-index: 4;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.015em;
+  display: grid;
+  gap: 8px;
+  width: min(216px, 32vw);
+  pointer-events: none;
+}
+
+.widget {
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(207, 228, 246, 0.26);
+  backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    0 8px 18px rgba(0, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.96);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.widget p {
+  margin: 0;
+}
+
+.widget-clock {
+  text-align: center;
+}
+
+.widget-clock-time {
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+
+.widget-clock-date {
+  margin-top: 2px !important;
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.widget-analog-clock {
+  display: block;
+  width: 80px;
+  height: 80px;
+  margin: 8px auto 0;
+}
+
+.analog-face {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-width: 1.5;
+}
+
+.analog-hand {
+  stroke-linecap: round;
+}
+
+.analog-hour {
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 3;
+}
+
+.analog-minute {
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 2;
+}
+
+.analog-second {
+  stroke: rgba(14, 146, 255, 0.9);
+  stroke-width: 1;
+}
+
+.analog-center {
+  fill: rgba(255, 255, 255, 0.92);
+}
+
+.widget-calendar-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.widget-calendar-month {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.widget-calendar-year {
+  font-size: 0.76rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.widget-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 2px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.widget-calendar-cell {
+  padding: 3px 0;
+  border-radius: 999px;
+  line-height: 1.3;
+}
+
+.widget-calendar-weekday {
+  opacity: 0.65;
+  font-weight: 700;
+}
+
+.widget-calendar-day.today {
+  background: rgba(14, 146, 255, 0.9);
+  color: #fff;
+  font-weight: 800;
+  text-shadow: none;
+  box-shadow: 0 2px 10px rgba(14, 146, 255, 0.45);
 }
 
 .window-layer {
@@ -702,30 +821,17 @@ body.taskbar-reordering .taskbar-app {
 
 .desktop-icons {
   position: absolute;
-  top: 58px;
-  left: 12px;
+  inset: 0;
   z-index: 4;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 96px);
-  justify-content: start;
-  align-content: start;
-  column-gap: 6px;
-  row-gap: 8px;
-  min-width: 198px;
-  min-height: 104px;
-  padding: 6px;
-  border: 1.5px dashed transparent;
-  border-radius: 16px;
   pointer-events: none;
-  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
 body.taskbar-reordering .desktop-icons {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .desktop-icon {
+  position: absolute;
   width: 96px;
   height: 104px;
   padding: 8px 4px 6px;
@@ -836,6 +942,77 @@ html[data-theme="windowsxp"] .desktop-icon-label {
 .taskbar-app span {
   font-size: 1.15rem;
   line-height: 1;
+}
+
+.taskbar-mic {
+  cursor: pointer;
+}
+
+.taskbar-mic svg {
+  width: var(--georgeos-icon-size);
+  height: var(--georgeos-icon-size);
+  pointer-events: none;
+}
+
+.taskbar-mic[data-state="on"] {
+  background: rgba(14, 146, 255, 0.35);
+  box-shadow:
+    inset 0 0 0 2px rgba(14, 146, 255, 0.6),
+    0 0 14px rgba(14, 146, 255, 0.35);
+  animation: mic-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(14, 146, 255, 0.6), 0 0 10px rgba(14, 146, 255, 0.25); }
+  50% { box-shadow: inset 0 0 0 2px rgba(14, 146, 255, 0.8), 0 0 22px rgba(14, 146, 255, 0.5); }
+}
+
+.voice-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-40px);
+  padding: 8px 20px;
+  border-radius: 14px;
+  background: rgba(20, 28, 42, 0.88);
+  backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid rgba(14, 146, 255, 0.4);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.82rem;
+  font-weight: 600;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.voice-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+html[data-theme="windows11"] .voice-toast {
+  border-radius: 8px;
+  background: rgba(31, 33, 50, 0.92);
+}
+
+html[data-theme="windowsxp"] .voice-toast {
+  border-radius: 4px;
+  background: linear-gradient(180deg, #2a5298 0%, #1a3a6a 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+html[data-theme="windowsxp"] .taskbar-mic[data-state="on"] {
+  background: rgba(255, 176, 102, 0.35);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 176, 102, 0.6),
+    0 0 14px rgba(255, 176, 102, 0.35);
+  animation: mic-pulse-xp 1.5s ease-in-out infinite;
+}
+
+@keyframes mic-pulse-xp {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(255, 176, 102, 0.6), 0 0 10px rgba(255, 176, 102, 0.25); }
+  50% { box-shadow: inset 0 0 0 2px rgba(255, 176, 102, 0.8), 0 0 22px rgba(255, 176, 102, 0.5); }
 }
 
 .app-shell {
@@ -1838,11 +2015,10 @@ html[data-theme="windowsxp"] .desktop-icon-label {
     height: 100%;
   }
 
-  .widgets {
-    top: 30px;
-    left: 14px;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 116px 88px;
+  .desktop-widgets {
+    top: 8px;
+    right: 10px;
+    width: min(190px, 46vw);
     gap: 6px;
   }
 
@@ -1874,10 +2050,8 @@ html[data-theme="windowsxp"] .desktop-icon-label {
     height: var(--georgeos-icon-size);
   }
 
-  .desktop-clock {
-    top: 8px;
-    right: 10px;
-    font-size: 0.9rem;
+  .widget {
+    padding: 9px 11px;
   }
 
   .workspace-pill {
@@ -2083,6 +2257,29 @@ html[data-theme="windows11"] .workspace-pill:hover {
   background: rgba(41, 43, 60, 0.9);
 }
 
+html[data-theme="windows11"] .widget {
+  border-radius: 8px;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(31, 33, 50, 0.84);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
+}
+
+html[data-theme="windows11"] .widget-calendar-day.today {
+  background: #4cc2ff;
+  color: #08122e;
+  box-shadow: none;
+}
+
+html[data-theme="windows11"] .analog-second {
+  stroke: #4cc2ff;
+}
+
+html[data-theme="windows11"] .analog-face {
+  stroke: rgba(255, 255, 255, 0.15);
+}
+
 html[data-theme="windows11"] .app-window {
   border-radius: 8px;
   background: rgba(28, 30, 42, 0.94);
@@ -2198,6 +2395,31 @@ html[data-theme="windowsxp"] .workspace-pill:hover {
   background: linear-gradient(180deg, #7bb8ff 0%, #3f8cf0 50%, #2569dd 100%);
 }
 
+html[data-theme="windowsxp"] .widget {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #6fb0f4 0%, #2f7fe0 50%, #1a5fd0 100%);
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset -1px 0 0 rgba(0, 0, 0, 0.2),
+    0 8px 18px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="windowsxp"] .widget-calendar-day.today {
+  background: linear-gradient(180deg, #ffb066 0%, #f57e17 100%);
+  color: #fff;
+  box-shadow: none;
+}
+
+html[data-theme="windowsxp"] .analog-second {
+  stroke: #ffb066;
+}
+
+html[data-theme="windowsxp"] .analog-face {
+  stroke: rgba(255, 255, 255, 0.3);
+}
+
 html[data-theme="windowsxp"] .app-window {
   border-radius: 8px 8px 0 0;
   background: #0d1626;
@@ -2257,4 +2479,280 @@ html[data-theme="windowsxp"] .window-control:hover {
 
 html[data-theme="windowsxp"] .resize-handle {
   display: none;
+}
+
+.boot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(120vmax 70vmax at 50% 42%, rgba(16, 84, 233, 0.28), transparent 62%),
+    linear-gradient(180deg, #04060f 0%, #081230 52%, #01030a 100%);
+  animation: boot-exit 680ms cubic-bezier(0.5, 0, 0.2, 1) 2450ms forwards;
+}
+
+.boot-stars {
+  position: absolute;
+  inset: -12%;
+  background-image:
+    radial-gradient(2px 2px at 12% 22%, rgba(255, 255, 255, 0.9), transparent 60%),
+    radial-gradient(3px 3px at 28% 64%, rgba(190, 214, 255, 0.8), transparent 60%),
+    radial-gradient(2px 2px at 44% 14%, rgba(255, 255, 255, 0.75), transparent 60%),
+    radial-gradient(3px 3px at 61% 48%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(2px 2px at 74% 78%, rgba(190, 214, 255, 0.7), transparent 60%),
+    radial-gradient(2px 2px at 86% 30%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(3px 3px at 18% 84%, rgba(255, 255, 255, 0.7), transparent 60%),
+    radial-gradient(2px 2px at 52% 88%, rgba(214, 232, 255, 0.75), transparent 60%),
+    radial-gradient(2px 2px at 92% 62%, rgba(255, 255, 255, 0.8), transparent 60%),
+    radial-gradient(3px 3px at 36% 38%, rgba(255, 255, 255, 0.65), transparent 60%);
+  animation: boot-twinkle 2400ms ease-in-out infinite;
+}
+
+.boot-core {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 30px;
+  padding: 0 24px;
+}
+
+.boot-halo {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: min(72vmin, 540px);
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: radial-gradient(closest-side, rgba(37, 99, 255, 0.42), rgba(37, 99, 255, 0.14) 46%, transparent 72%);
+  filter: blur(10px);
+  animation: boot-halo 2200ms ease-in-out infinite;
+}
+
+.boot-logo {
+  margin: 0;
+  display: flex;
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-size: clamp(2.6rem, 8vw, 5.2rem);
+  line-height: 1.2;
+  color: #f4faff;
+  text-shadow:
+    0 0 26px rgba(102, 178, 255, 0.55),
+    0 4px 30px rgba(0, 0, 0, 0.45);
+  animation: boot-glow-pulse 2600ms ease-in-out 1000ms infinite;
+}
+
+.boot-logo span {
+  display: inline-block;
+  animation: boot-letter-in 640ms cubic-bezier(0.18, 0.8, 0.26, 1) both;
+  animation-delay: calc(180ms + var(--i) * 62ms);
+}
+
+.boot-progress {
+  position: relative;
+  z-index: 1;
+  width: min(300px, 64vw);
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  opacity: 0;
+  animation: boot-appear 480ms ease 520ms forwards;
+}
+
+.boot-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0b63d8, #39a7ff 55%, #8fd4ff);
+  box-shadow: 0 0 16px rgba(57, 167, 255, 0.85);
+  position: relative;
+  overflow: hidden;
+  animation: boot-fill 1700ms cubic-bezier(0.33, 0.1, 0.2, 1) 620ms forwards;
+}
+
+.boot-progress span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 25%, rgba(255, 255, 255, 0.85) 50%, transparent 75%);
+  transform: translateX(-110%);
+  animation: boot-shine 1150ms ease-in-out 950ms 2;
+}
+
+.boot-caption {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(214, 232, 255, 0.66);
+  opacity: 0;
+  animation: boot-appear 520ms ease 1050ms forwards;
+}
+
+.boot-caption i {
+  font-style: normal;
+  animation: boot-dot 1200ms ease-in-out infinite;
+}
+
+.boot-caption i:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.boot-caption i:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+.boot-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.95), rgba(190, 222, 255, 0.5) 32%, transparent 68%);
+  opacity: 0;
+  animation: boot-flash-pop 720ms ease-out 2380ms forwards;
+}
+
+@keyframes welcome-clock-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(26px);
+  }
+}
+
+@keyframes welcome-button-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(30px);
+  }
+}
+
+@keyframes boot-letter-in {
+  from {
+    opacity: 0;
+    transform: translateY(32px) rotate(7deg) scale(0.7);
+    filter: blur(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes boot-appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes boot-fill {
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes boot-shine {
+  to {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes boot-glow-pulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 26px rgba(102, 178, 255, 0.55),
+      0 4px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  50% {
+    text-shadow:
+      0 0 42px rgba(143, 212, 255, 0.95),
+      0 4px 30px rgba(0, 0, 0, 0.45);
+  }
+}
+
+@keyframes boot-halo {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes boot-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes boot-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes boot-flash-pop {
+  0% {
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes boot-exit {
+  to {
+    opacity: 0;
+    transform: scale(1.07);
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-overlay,
+  .boot-flash {
+    display: none;
+  }
+
+  .welcome-clock,
+  .bottom-button,
+  .welcome-time,
+  .view {
+    animation: none !important;
+    transition: none !important;
+  }
 }
