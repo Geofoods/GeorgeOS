@@ -1,5 +1,4 @@
 const scene = document.querySelector('.scene');
-const continueButton = document.querySelector('.bottom-button');
 const welcomeView = document.querySelector('.welcome-view');
 const welcomeDateElement = document.querySelector('#welcome-date');
 const welcomeTimeElement = document.querySelector('#welcome-time');
@@ -21,11 +20,6 @@ const calendarGridElement = document.querySelector('#calendar-grid');
 const analogHourHand = document.querySelector('#analog-hour');
 const analogMinuteHand = document.querySelector('#analog-minute');
 const analogSecondHand = document.querySelector('#analog-second');
-
-const bootOverlayElement = document.getElementById('boot-overlay');
-if (bootOverlayElement) {
-  window.setTimeout(() => bootOverlayElement.remove(), 3600);
-}
 
 const WORKSPACE_COUNT = 4;
 const WORKSPACE_COLUMNS = 2;
@@ -176,6 +170,50 @@ function applyTextScale(scale) {
 applyIconScale(getIconScale());
 applyTextScale(getTextScale());
 
+const DEFAULT_AVATAR = 'default-avatar-profile-icon-of-social-media-user-vector.jpg';
+
+function loadProfiles() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('georgeos-profiles') || '[]');
+    if (Array.isArray(stored) && stored.length > 0) {
+      return stored;
+    }
+  } catch {}
+  return [{ id: 'default', name: 'user', avatar: DEFAULT_AVATAR, password: null }];
+}
+
+function saveProfiles() {
+  try {
+    localStorage.setItem('georgeos-profiles', JSON.stringify(profiles));
+  } catch {}
+}
+
+let profiles = loadProfiles();
+let activeProfileId = null;
+
+function createProfile(name, avatar, password) {
+  const id = 'profile-' + Date.now();
+  const profile = { id, name, avatar: avatar || DEFAULT_AVATAR, password: password || null };
+  profiles.push(profile);
+  saveProfiles();
+  return profile;
+}
+
+function deleteProfile(id) {
+  if (id === 'default') return;
+  profiles = profiles.filter((p) => p.id !== id);
+  saveProfiles();
+}
+
+function getProfileById(id) {
+  return profiles.find((p) => p.id === id) || profiles[0];
+}
+
+function authenticateProfile(profile, password) {
+  if (!profile.password) return true;
+  return profile.password === password;
+}
+
 let currentWorkspace = 0;
 let overviewOpen = false;
 
@@ -258,6 +296,7 @@ const photoLibrary = [
   { src: 'IMG_8025.jpg', title: 'Photo 4' },
   { src: 'IMG_7942.jpg', title: 'Photo 5' },
   { src: 'IMG_7477.jpg', title: 'Photo 6' },
+  { src: 'windowsxp.jpg', title: 'Windows XP' },
   SPACE_PHOTO,
 ];
 
@@ -397,6 +436,14 @@ const appConfigs = {
     height: '360px',
     build: buildSystemBreachApp,
   },
+  solitaire: {
+    title: 'Solitaire',
+    x: 'calc(50% - 340px)',
+    y: 'calc(50% - 260px)',
+    width: '680px',
+    height: '520px',
+    build: buildSolitaireApp,
+  },
   customize: {
     title: 'Customization',
     x: 'calc(50% - 220px)',
@@ -423,13 +470,145 @@ function showWelcome() {
   scene.dataset.view = 'welcome';
   desktopView.hidden = true;
   welcomeView.hidden = false;
+  resetLoginScreen();
 }
 
-continueButton.addEventListener('click', () => {
+const loginProfilesEl = document.querySelector('#login-profiles');
+const loginFormEl = document.querySelector('#login-form');
+const loginAvatarEl = document.querySelector('#login-avatar');
+const loginUsernameEl = document.querySelector('#login-username');
+const loginPasswordEl = document.querySelector('#login-password');
+const loginHintEl = document.querySelector('#login-hint');
+const loginSubmitBtn = document.querySelector('#login-submit');
+const loginBackBtn = document.querySelector('#login-back');
+const loginAddUserBtn = document.querySelector('#login-add-user');
+const createProfilePanel = document.querySelector('#create-profile-panel');
+const createAvatarPreview = document.querySelector('#create-avatar-preview');
+const createAvatarInput = document.querySelector('#create-avatar-input');
+const createNameInput = document.querySelector('#create-name');
+const createPasswordInput = document.querySelector('#create-password');
+const createSubmitBtn = document.querySelector('#create-submit');
+const createCancelBtn = document.querySelector('#create-cancel');
+
+let selectedLoginProfile = null;
+let pendingAvatarData = null;
+
+function resetLoginScreen() {
+  loginFormEl.hidden = true;
+  createProfilePanel.hidden = true;
+  loginProfilesEl.hidden = false;
+  loginAddUserBtn.hidden = false;
+  selectedLoginProfile = null;
+  loginPasswordEl.value = '';
+  loginHintEl.textContent = '';
+  renderProfileList();
+}
+
+function renderProfileList() {
+  loginProfilesEl.textContent = '';
+  profiles.forEach((profile) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'login-profile-card';
+    card.innerHTML = `
+      <img class="login-profile-avatar" src="${profile.avatar}" alt="${profile.name}" />
+      <span class="login-profile-name">${profile.name}</span>
+      ${profile.password ? '<span class="login-profile-lock" aria-label="Has password">&#128274;</span>' : ''}
+    `;
+    card.addEventListener('click', () => selectProfile(profile));
+    loginProfilesEl.append(card);
+  });
+}
+
+function selectProfile(profile) {
+  selectedLoginProfile = profile;
+  loginProfilesEl.hidden = true;
+  loginAddUserBtn.hidden = true;
+  loginFormEl.hidden = false;
+  loginAvatarEl.src = profile.avatar;
+  loginUsernameEl.textContent = profile.name;
+  loginPasswordEl.value = '';
+  loginHintEl.textContent = '';
+  if (profile.password) {
+    loginPasswordEl.hidden = false;
+    loginPasswordEl.focus();
+  } else {
+    loginPasswordEl.hidden = true;
+  }
+}
+
+function unlockDesktop() {
   soundEngine.ensureContext();
   soundEngine.play('tap');
   setTimeout(() => soundEngine.play('unlock'), 60);
   showDesktop();
+}
+
+loginSubmitBtn.addEventListener('click', () => {
+  if (!selectedLoginProfile) return;
+  const password = loginPasswordEl.value;
+  if (authenticateProfile(selectedLoginProfile, password)) {
+    activeProfileId = selectedLoginProfile.id;
+    unlockDesktop();
+  } else {
+    loginHintEl.textContent = 'Wrong password';
+    loginPasswordEl.value = '';
+    loginPasswordEl.focus();
+  }
+});
+
+loginPasswordEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    loginSubmitBtn.click();
+  }
+});
+
+loginBackBtn.addEventListener('click', resetLoginScreen);
+
+loginAddUserBtn.addEventListener('click', () => {
+  loginProfilesEl.hidden = true;
+  loginAddUserBtn.hidden = true;
+  createProfilePanel.hidden = false;
+  createNameInput.value = '';
+  createPasswordInput.value = '';
+  createAvatarPreview.src = DEFAULT_AVATAR;
+  pendingAvatarData = null;
+  createNameInput.focus();
+});
+
+createAvatarInput.addEventListener('change', () => {
+  const file = createAvatarInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    pendingAvatarData = reader.result;
+    createAvatarPreview.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+createSubmitBtn.addEventListener('click', () => {
+  const name = createNameInput.value.trim();
+  if (!name) {
+    createNameInput.focus();
+    return;
+  }
+  createProfile(name, pendingAvatarData, createPasswordInput.value || null);
+  createProfilePanel.hidden = true;
+  resetLoginScreen();
+});
+
+createCancelBtn.addEventListener('click', () => {
+  createProfilePanel.hidden = true;
+  resetLoginScreen();
+});
+
+createNameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') createSubmitBtn.click();
+});
+
+createPasswordInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') createSubmitBtn.click();
 });
 
 window.addEventListener('keydown', (event) => {
@@ -1416,143 +1595,7 @@ function updateClock() {
   welcomeTimeElement.textContent = welcomeTime;
 }
 
-let voiceRecognition = null;
-let voiceToastTimer = null;
 
-const micButton = document.querySelector('#mic-button');
-
-function showToast(message) {
-  let toast = document.querySelector('.voice-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.className = 'voice-toast';
-    document.body.append(toast);
-  }
-  toast.textContent = message;
-  toast.classList.add('visible');
-  clearTimeout(voiceToastTimer);
-  voiceToastTimer = setTimeout(() => toast.classList.remove('visible'), 2200);
-}
-
-function handleVoiceCommand(transcript) {
-  const text = transcript.toLowerCase().trim();
-
-  const appAliases = {
-    calculator: 'calculator', calc: 'calculator',
-    photos: 'photos', photo: 'photos',
-    paint: 'paint', drawing: 'paint',
-    weather: 'weather',
-    camera: 'camera',
-    mail: 'mail', email: 'mail',
-    projects: 'projects', project: 'projects', github: 'projects',
-    'holy moly': 'holy-moly', holymoly: 'holy-moly',
-    linkedin: 'linkedin',
-    youtube: 'youtube',
-    instagram: 'instagram', insta: 'instagram',
-    'system breach': 'system-breach', systembreach: 'system-breach',
-    customize: 'customize', customization: 'customize', theme: 'customize', themes: 'customize',
-  };
-
-  const openMatch = text.match(/^(?:open|launch|start|show)\s+(.+)/);
-  const appGuess = openMatch ? openMatch[1] : text;
-
-  for (const [alias, appId] of Object.entries(appAliases)) {
-    if (appGuess.includes(alias)) {
-      showDesktop();
-      openApp(appId);
-      showToast(`Opening ${appId.replace('-', ' ')}`);
-      return;
-    }
-  }
-
-  if (text.includes('desktop') || text.includes('home screen')) {
-    showDesktop();
-    showToast('Showing desktop');
-    return;
-  }
-
-  if (text.includes('lock') || text.includes('welcome') || text.includes('go back') || text.includes('sign out')) {
-    showWelcome();
-    showToast('Locking screen');
-    return;
-  }
-
-  if (text.includes('overview') || text.includes('workspaces') || text.includes('workspace')) {
-    showDesktop();
-    openOverview();
-    showToast('Opening workspaces');
-    return;
-  }
-
-  if (text.includes('close overview') || text.includes('close workspaces')) {
-    closeOverview();
-    showToast('Closing overview');
-    return;
-  }
-
-  showToast(`Didn't understand: "${transcript}"`);
-}
-
-function toggleVoice() {
-  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognitionAPI) {
-    showToast('Voice not supported in this browser');
-    return;
-  }
-
-  if (micButton.dataset.state === 'on') {
-    micButton.dataset.state = 'off';
-    if (voiceRecognition) {
-      voiceRecognition.abort();
-      voiceRecognition = null;
-    }
-    showToast('Voice off');
-    return;
-  }
-
-  const recognition = new SpeechRecognitionAPI();
-  recognition.continuous = true;
-  recognition.interimResults = false;
-  recognition.lang = 'en-US';
-
-  recognition.onresult = (event) => {
-    const last = event.results[event.results.length - 1];
-    if (last.isFinal) {
-      handleVoiceCommand(last[0].transcript);
-    }
-  };
-
-  recognition.onerror = (event) => {
-    if (event.error === 'no-speech' || event.error === 'aborted') return;
-    console.warn('Voice recognition error:', event.error);
-  };
-
-  recognition.onend = () => {
-    if (micButton.dataset.state === 'on' && voiceRecognition) {
-      try { recognition.start(); } catch (_) {}
-    }
-  };
-
-  voiceRecognition = recognition;
-
-  try {
-    recognition.start();
-    micButton.dataset.state = 'on';
-    showToast('Listening...');
-  } catch (_) {
-    showToast('Could not start voice recognition');
-  }
-}
-
-if (micButton) {
-  micButton.addEventListener('click', toggleVoice);
-  if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
-    micButton.dataset.state = 'off';
-    micButton.title = 'Voice not supported in this browser';
-    micButton.style.opacity = '0.4';
-    micButton.style.cursor = 'not-allowed';
-  }
-}
 
 function buildCalculatorApp(windowElement) {
   const shell = document.createElement('div');
@@ -2792,6 +2835,369 @@ function buildSystemBreachApp(windowElement) {
     window.open(systemBreachUrl, '_blank', 'noopener,noreferrer');
   });
 
+  return shell;
+}
+
+function buildSolitaireApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'solitaire-shell';
+  shell.innerHTML = `
+    <div class="solitaire-toolbar">
+      <button type="button" class="solitaire-new">New Game</button>
+      <span class="solitaire-status">Klondike Solitaire</span>
+    </div>
+    <div class="solitaire-board"></div>
+  `;
+  const board = shell.querySelector('.solitaire-board');
+  const newBtn = shell.querySelector('.solitaire-new');
+  const statusEl = shell.querySelector('.solitaire-status');
+
+  const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
+  const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  const SUIT_SYMBOL = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
+  const SUIT_COLOR = { hearts: '#e74c3c', diamonds: '#e74c3c', clubs: '#2c3e50', spades: '#2c3e50' };
+
+  let stock = [], waste = [], foundations = [[],[],[],[]], tableau = [[],[],[],[],[],[],[]];
+  let dragState = null;
+
+  function createDeck() {
+    const deck = [];
+    for (const suit of SUITS) {
+      for (const rank of RANKS) {
+        deck.push({ suit, rank, faceUp: false });
+      }
+    }
+    return deck;
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function deal() {
+    stock = []; waste = [];
+    foundations = [[],[],[],[]]; tableau = [[],[],[],[],[],[],[]];
+    const deck = shuffle(createDeck());
+    let idx = 0;
+    for (let col = 0; col < 7; col++) {
+      for (let row = col; row < 7; row++) {
+        const card = deck[idx++];
+        card.faceUp = row === col;
+        tableau[row].push(card);
+      }
+    }
+    while (idx < 52) {
+      deck[idx].faceUp = false;
+      stock.push(deck[idx++]);
+    }
+  }
+
+  function cardId(c) { return c.suit + c.rank; }
+  function isRed(c) { return c.suit === 'hearts' || c.suit === 'diamonds'; }
+  function rankVal(c) { return RANKS.indexOf(c.rank); }
+  function foundationTarget(fi) { return SUITS[fi]; }
+
+  function canPlaceOnTableau(card, pile) {
+    if (pile.length === 0) return card.rank === 'K';
+    const top = pile[pile.length - 1];
+    return top.faceUp && isRed(card) !== isRed(top) && rankVal(card) === rankVal(top) - 1;
+  }
+
+  function canPlaceOnFoundation(card, fi) {
+    const pile = foundations[fi];
+    if (pile.length === 0) return card.rank === 'A' && card.suit === foundationTarget(fi);
+    const top = pile[pile.length - 1];
+    return card.suit === top.suit && rankVal(card) === rankVal(top) + 1;
+  }
+
+  function findSource(cardId) {
+    for (let i = 0; i < waste.length; i++) {
+      if (cardId === cardId(waste[i])) return { pile: 'waste', index: i };
+    }
+    for (let fi = 0; fi < 4; fi++) {
+      for (let i = 0; i < foundations[fi].length; i++) {
+        if (cardId === cardId(foundations[fi][i])) return { pile: 'foundation', fi, index: i };
+      }
+    }
+    for (let ti = 0; ti < 7; ti++) {
+      for (let i = 0; i < tableau[ti].length; i++) {
+        if (cardId === cardId(tableau[ti][i])) return { pile: 'tableau', ti, index: i };
+      }
+    }
+    return null;
+  }
+
+  function flipTopOfTableau() {
+    for (let ti = 0; ti < 7; ti++) {
+      const pile = tableau[ti];
+      if (pile.length > 0 && !pile[pile.length - 1].faceUp) {
+        pile[pile.length - 1].faceUp = true;
+      }
+    }
+  }
+
+  function checkWin() {
+    return foundations.every(f => f.length === 13);
+  }
+
+  function render() {
+    board.textContent = '';
+    board.style.display = 'grid';
+    board.style.gridTemplateColumns = 'repeat(7, 1fr)';
+    board.style.gridTemplateRows = 'auto auto';
+    board.style.gap = '6px';
+    board.style.padding = '8px';
+    board.style.height = '100%';
+    board.style.alignContent = 'start';
+
+    const topRow = document.createElement('div');
+    topRow.className = 'solitaire-top-row';
+    topRow.style.cssText = 'grid-column:1/-1;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;';
+
+    const stockCell = document.createElement('div');
+    stockCell.className = 'solitaire-cell solitaire-stock';
+    if (stock.length > 0) {
+      const cardEl = createCardEl(stock[stock.length - 1], false);
+      cardEl.addEventListener('click', drawFromStock);
+      stockCell.append(cardEl);
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'solitaire-card solitaire-empty';
+      empty.addEventListener('click', resetStock);
+      const recycle = document.createElement('span');
+      recycle.textContent = '↻';
+      recycle.style.cssText = 'font-size:24px;opacity:0.4;';
+      empty.append(recycle);
+      stockCell.append(empty);
+    }
+
+    const wasteCell = document.createElement('div');
+    wasteCell.className = 'solitaire-cell solitaire-waste';
+    if (waste.length > 0) {
+      const card = waste[waste.length - 1];
+      const cardEl = createCardEl(card, true);
+      bindDrag(cardEl, card, 'waste');
+      wasteCell.append(cardEl);
+    }
+
+    const spacer = document.createElement('div');
+    spacer.style.cssText = 'grid-column:3;';
+
+    const foundCells = [];
+    for (let fi = 0; fi < 4; fi++) {
+      const cell = document.createElement('div');
+      cell.className = 'solitaire-cell solitaire-foundation';
+      cell.dataset.foundation = fi;
+      if (foundations[fi].length > 0) {
+        const card = foundations[fi][foundations[fi].length - 1];
+        const cardEl = createCardEl(card, true);
+        bindDrag(cardEl, card, 'foundation');
+        cell.append(cardEl);
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'solitaire-card solitaire-empty';
+        empty.dataset.foundation = fi;
+        const sym = document.createElement('span');
+        sym.textContent = SUIT_SYMBOL[SUITS[fi]];
+        sym.style.cssText = `font-size:20px;color:${SUIT_COLOR[SUITS[fi]]};opacity:0.25;`;
+        empty.append(sym);
+        cell.append(empty);
+      }
+      foundCells.push(cell);
+    }
+
+    topRow.append(stockCell, wasteCell, spacer, ...foundCells);
+    board.append(topRow);
+
+    const tableauRow = document.createElement('div');
+    tableauRow.className = 'solitaire-tableau-row';
+    tableauRow.style.cssText = 'grid-column:1/-1;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;';
+
+    for (let ti = 0; ti < 7; ti++) {
+      const col = document.createElement('div');
+      col.className = 'solitaire-column';
+      col.dataset.tableau = ti;
+      const pile = tableau[ti];
+      if (pile.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'solitaire-card solitaire-empty';
+        col.append(empty);
+      } else {
+        pile.forEach((card, i) => {
+          const cardEl = createCardEl(card, card.faceUp);
+          cardEl.style.position = 'relative';
+          cardEl.style.marginTop = i > 0 ? (card.faceUp ? '-52px' : '-38px') : '0';
+          if (card.faceUp) {
+            bindDrag(cardEl, card, 'tableau', ti, i);
+          }
+          col.append(cardEl);
+        });
+      }
+      tableauRow.append(col);
+    }
+
+    board.append(tableauRow);
+
+    if (checkWin()) {
+      statusEl.textContent = 'You win! 🎉';
+    }
+  }
+
+  function createCardEl(card, faceUp) {
+    const el = document.createElement('div');
+    el.className = `solitaire-card ${faceUp ? 'face-up' : 'face-down'}`;
+    el.dataset.cardId = cardId(card);
+    if (faceUp) {
+      const color = SUIT_COLOR[card.suit];
+      const sym = SUIT_SYMBOL[card.suit];
+      el.innerHTML = `
+        <div class="solitaire-card-tl"><span style="color:${color}">${card.rank}</span><span style="color:${color};font-size:0.7em">${sym}</span></div>
+        <div class="solitaire-card-center" style="color:${color};font-size:1.4em">${sym}</div>
+        <div class="solitaire-card-br"><span style="color:${color}">${card.rank}</span><span style="color:${color};font-size:0.7em">${sym}</span></div>
+      `;
+    } else {
+      el.innerHTML = '<div class="solitaire-card-back"></div>';
+    }
+    return el;
+  }
+
+  function drawFromStock() {
+    if (stock.length === 0) return;
+    const card = stock.pop();
+    card.faceUp = true;
+    waste.push(card);
+    render();
+  }
+
+  function resetStock() {
+    while (waste.length > 0) {
+      const card = waste.pop();
+      card.faceUp = false;
+      stock.push(card);
+    }
+    render();
+  }
+
+  function bindDrag(el, card, sourceType, sourceTi, sourceIdx) {
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+
+      let cards = [card];
+      if (sourceType === 'tableau' && sourceIdx !== undefined) {
+        cards = tableau[sourceTi].slice(sourceIdx);
+      } else if (sourceType === 'waste') {
+        cards = [waste[waste.length - 1]];
+      } else if (sourceType === 'foundation') {
+        const fi = parseInt(el.closest('.solitaire-foundation')?.dataset.foundation ?? -1);
+        if (fi >= 0) cards = [foundations[fi][foundations[fi].length - 1]];
+      }
+
+      const ghost = el.cloneNode(true);
+      ghost.className = 'solitaire-card face-up solitaire-drag-ghost';
+      ghost.style.position = 'fixed';
+      ghost.style.zIndex = '10000';
+      ghost.style.pointerEvents = 'none';
+      ghost.style.width = rect.width + 'px';
+      ghost.style.transition = 'none';
+      document.body.append(ghost);
+
+      const offsetX = e.clientX - rect.left;
+      const offsetY = e.clientY - rect.top;
+
+      el.style.opacity = '0.3';
+
+      dragState = { cards, sourceType, sourceTi, sourceIdx, ghost, offsetX, offsetY, originEl: el, dropped: false };
+
+      const onMove = (me) => {
+        ghost.style.left = (me.clientX - offsetX) + 'px';
+        ghost.style.top = (me.clientY - offsetY) + 'px';
+      };
+
+      const onUp = (ue) => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        ghost.remove();
+        el.style.opacity = '';
+
+        const target = findDropTarget(ue.clientX, ue.clientY);
+        if (target && tryDrop(cards, sourceType, sourceTi, target)) {
+          dragState.dropped = true;
+          flipTopOfTableau();
+        }
+        render();
+        dragState = null;
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp, { once: true });
+      ghost.style.left = (e.clientX - offsetX) + 'px';
+      ghost.style.top = (e.clientY - offsetY) + 'px';
+    });
+  }
+
+  function findDropTarget(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (!el) return null;
+
+    const foundationCell = el.closest('.solitaire-foundation');
+    if (foundationCell) {
+      return { type: 'foundation', fi: parseInt(foundationCell.dataset.foundation) };
+    }
+
+    const tableauCol = el.closest('.solitaire-column');
+    if (tableauCol) {
+      return { type: 'tableau', ti: parseInt(tableauCol.dataset.tableau) };
+    }
+
+    return null;
+  }
+
+  function tryDrop(cards, sourceType, sourceTi, target) {
+    const first = cards[0];
+
+    if (target.type === 'foundation') {
+      if (cards.length !== 1) return false;
+      if (!canPlaceOnFoundation(first, target.fi)) return false;
+      removeCards(sourceType, sourceTi);
+      foundations[target.fi].push(first);
+      return true;
+    }
+
+    if (target.type === 'tableau') {
+      if (!canPlaceOnTableau(first, tableau[target.ti])) return false;
+      removeCards(sourceType, sourceTi);
+      tableau[target.ti].push(...cards);
+      return true;
+    }
+
+    return false;
+  }
+
+  function removeCards(sourceType, sourceTi, count) {
+    if (sourceType === 'waste') {
+      waste.pop();
+    } else if (sourceType === 'foundation') {
+      for (let fi = 0; fi < 4; fi++) {
+        const pile = foundations[fi];
+        if (pile.length > 0 && pile[pile.length - 1] === arguments[3]) {
+          pile.pop();
+          return;
+        }
+      }
+    } else if (sourceType === 'tableau') {
+      tableau[sourceTi].splice(-cards.length);
+    }
+  }
+
+  newBtn.addEventListener('click', () => { deal(); render(); });
+  deal();
+  render();
   return shell;
 }
 

@@ -13,29 +13,39 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="boot-overlay" id="boot-overlay" aria-hidden="true">
-      <div class="boot-stars"></div>
-      <div class="boot-core">
-        <div class="boot-halo"></div>
-        <p class="boot-logo">
-          <span style="--i: 0">G</span><span style="--i: 1">e</span><span style="--i: 2">o</span><span style="--i: 3">r</span><span style="--i: 4">g</span><span style="--i: 5">e</span><span style="--i: 6">O</span><span style="--i: 7">S</span>
-        </p>
-        <div class="boot-progress"><span></span></div>
-        <p class="boot-caption">Starting<i>.</i><i>.</i><i>.</i></p>
-      </div>
-      <div class="boot-flash"></div>
-    </div>
     <main class="scene" aria-label="Welcome screen">
       <section class="view welcome-view" aria-label="Lock screen">
         <div class="welcome-clock" aria-live="polite">
           <p id="welcome-date" class="welcome-date">Friday, August 18</p>
           <p id="welcome-time" class="welcome-time">9:41</p>
         </div>
-        <button class="bottom-button" type="button" aria-label="Enter desktop">
-          <img class="user-avatar" src="default-avatar-profile-icon-of-social-media-user-vector.jpg" alt="" aria-hidden="true" />
-          <span class="user-name">user</span>
-          <span class="unlock-caption">Enter</span>
-        </button>
+        <div class="login-panel">
+          <div class="login-profiles" id="login-profiles"></div>
+          <div class="login-form" id="login-form" hidden>
+            <img class="login-avatar" id="login-avatar" src="" alt="" />
+            <span class="login-username" id="login-username"></span>
+            <input class="login-password" id="login-password" type="password" placeholder="Password" autocomplete="off" />
+            <span class="login-hint" id="login-hint"></span>
+            <button class="login-submit" id="login-submit" type="button">Sign In</button>
+            <button class="login-back" id="login-back" type="button">Back</button>
+          </div>
+          <button class="login-add-user" id="login-add-user" type="button">+ Add User</button>
+        </div>
+        <div class="create-profile-panel" id="create-profile-panel" hidden>
+          <div class="create-profile-form">
+            <div class="create-profile-avatar-wrap">
+              <img class="create-profile-avatar" id="create-avatar-preview" src="default-avatar-profile-icon-of-social-media-user-vector.jpg" alt="" />
+              <label class="create-profile-avatar-btn" for="create-avatar-input">Choose Photo</label>
+              <input type="file" id="create-avatar-input" accept="image/*" hidden />
+            </div>
+            <input class="create-profile-name" id="create-name" type="text" placeholder="Username" maxlength="20" />
+            <input class="create-profile-password" id="create-password" type="password" placeholder="Password (optional)" />
+            <div class="create-profile-actions">
+              <button class="create-profile-submit" id="create-submit" type="button">Create</button>
+              <button class="create-profile-cancel" id="create-cancel" type="button">Cancel</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="view desktop-view" aria-label="Desktop screen" hidden>
@@ -117,17 +127,13 @@
                 <button class="taskbar-app" type="button" data-app="system-breach" aria-label="Open System Breach">
                   <img src="icons/system-breach-icon.png" alt="" aria-hidden="true" />
                 </button>
+                <button class="taskbar-app" type="button" data-app="solitaire" aria-label="Open Solitaire">
+                  <img src="icons/solitaire-icon.svg" alt="" aria-hidden="true" />
+                </button>
                 <button class="taskbar-app" type="button" data-app="customize" aria-label="Open Customization">
                   <img src="icons/customize-icon.svg" alt="" aria-hidden="true" />
                 </button>
-                <button class="taskbar-app taskbar-mic" id="mic-button" type="button" data-state="off" aria-label="Toggle voice commands" title="Voice commands (Chrome/Edge only)">
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="9" y="1" width="6" height="12" rx="3" />
-                    <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
-                    <line x1="12" y1="18" x2="12" y2="23" />
-                    <line x1="8" y1="23" x2="16" y2="23" />
-                  </svg>
-                </button>
+
               </nav>
 
               <aside class="todoist-widget" id="todoist-widget" aria-label="Todoist tasks">
