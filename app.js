@@ -651,11 +651,11 @@ const suppressClickAfterDrag = (event) => {
 
 setupTaskbarReorder();
 setupDesktopIcons();
-const guestProfile = profiles.find((p) => p.id === 'guest');
-if (guestProfile) {
-  selectProfile(guestProfile);
+if (profiles.length === 1) {
+  selectProfile(profiles[0]);
+} else {
+  renderProfileList();
 }
-renderProfileList();
 
 function setupTaskbarReorder() {
   const taskbar = document.querySelector('.taskbar');
