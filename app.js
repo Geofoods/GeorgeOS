@@ -175,12 +175,19 @@ const GUEST_PROFILE = { id: 'guest', name: 'Guest', avatar: DEFAULT_AVATAR, pass
 
 function loadProfiles() {
   try {
-    const stored = JSON.parse(localStorage.getItem('georgeos-profiles') || '[]');
-    if (Array.isArray(stored) && stored.length > 0) {
-      if (!stored.some((p) => p.id === 'guest')) {
-        stored.unshift(GUEST_PROFILE);
+    const raw = localStorage.getItem('georgeos-profiles');
+    if (raw) {
+      const stored = JSON.parse(raw);
+      if (Array.isArray(stored) && stored.some((p) => p.id === 'default')) {
+        localStorage.removeItem('georgeos-profiles');
+        return [GUEST_PROFILE];
       }
-      return stored;
+      if (Array.isArray(stored) && stored.length > 0) {
+        if (!stored.some((p) => p.id === 'guest')) {
+          stored.unshift(GUEST_PROFILE);
+        }
+        return stored;
+      }
     }
   } catch {}
   return [GUEST_PROFILE];
