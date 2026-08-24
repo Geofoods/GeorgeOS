@@ -117,13 +117,25 @@ function setTheme(themeId) {
   const valid = themeOptions.some((theme) => theme.id === themeId);
   const next = valid ? themeId : 'macos';
   document.documentElement.dataset.theme = next;
+  try {
+    localStorage.setItem('georgeos-theme', next);
+  } catch {}
   document.querySelectorAll('.theme-option').forEach((button) => {
     button.classList.toggle('active', button.dataset.theme === next);
   });
   return next;
 }
 
-document.documentElement.dataset.theme = 'macos';
+(function loadSavedTheme() {
+  try {
+    const saved = localStorage.getItem('georgeos-theme');
+    if (saved && themeOptions.some((t) => t.id === saved)) {
+      document.documentElement.dataset.theme = saved;
+      return;
+    }
+  } catch {}
+  document.documentElement.dataset.theme = 'macos';
+})();
 
 const ICON_SIZE_BASE = 28;
 const TEXT_SIZE_BASE = 16;
@@ -175,19 +187,13 @@ const GUEST_PROFILE = { id: 'guest', name: 'Guest', avatar: DEFAULT_AVATAR, pass
 
 function loadProfiles() {
   try {
-    const raw = localStorage.getItem('georgeos-profiles');
-    if (raw) {
-      const stored = JSON.parse(raw);
-      if (Array.isArray(stored) && stored.some((p) => p.id === 'default')) {
-        localStorage.removeItem('georgeos-profiles');
-        return [GUEST_PROFILE];
+    const stored = JSON.parse(localStorage.getItem('georgeos-profiles'));
+    if (Array.isArray(stored)) {
+      const filtered = stored.filter((p) => p && p.id && p.id !== 'default' && p.name);
+      if (filtered.length && !filtered.some((p) => p.id === 'guest')) {
+        filtered.unshift(GUEST_PROFILE);
       }
-      if (Array.isArray(stored) && stored.length > 0) {
-        if (!stored.some((p) => p.id === 'guest')) {
-          stored.unshift(GUEST_PROFILE);
-        }
-        return stored;
-      }
+      return filtered.length ? filtered : [GUEST_PROFILE];
     }
   } catch {}
   return [GUEST_PROFILE];
