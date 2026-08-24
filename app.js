@@ -171,15 +171,19 @@ applyIconScale(getIconScale());
 applyTextScale(getTextScale());
 
 const DEFAULT_AVATAR = 'default-avatar-profile-icon-of-social-media-user-vector.jpg';
+const GUEST_PROFILE = { id: 'guest', name: 'Guest', avatar: DEFAULT_AVATAR, password: null };
 
 function loadProfiles() {
   try {
     const stored = JSON.parse(localStorage.getItem('georgeos-profiles') || '[]');
     if (Array.isArray(stored) && stored.length > 0) {
+      if (!stored.some((p) => p.id === 'guest')) {
+        stored.unshift(GUEST_PROFILE);
+      }
       return stored;
     }
   } catch {}
-  return [{ id: 'default', name: 'user', avatar: DEFAULT_AVATAR, password: null }];
+  return [GUEST_PROFILE];
 }
 
 function saveProfiles() {
@@ -200,7 +204,7 @@ function createProfile(name, avatar, password) {
 }
 
 function deleteProfile(id) {
-  if (id === 'default') return;
+  if (id === 'default' || id === 'guest') return;
   profiles = profiles.filter((p) => p.id !== id);
   saveProfiles();
 }
@@ -439,10 +443,18 @@ const appConfigs = {
   solitaire: {
     title: 'Solitaire',
     x: 'calc(50% - 340px)',
-    y: 'calc(50% - 260px)',
+    y: 'calc(50% - 250px)',
     width: '680px',
-    height: '520px',
+    height: '500px',
     build: buildSolitaireApp,
+  },
+  profiles: {
+    title: 'Profiles',
+    x: 'calc(50% - 220px)',
+    y: 'calc(50% - 210px)',
+    width: '440px',
+    height: '420px',
+    build: buildProfilesApp,
   },
   customize: {
     title: 'Customization',
@@ -481,23 +493,12 @@ const loginPasswordEl = document.querySelector('#login-password');
 const loginHintEl = document.querySelector('#login-hint');
 const loginSubmitBtn = document.querySelector('#login-submit');
 const loginBackBtn = document.querySelector('#login-back');
-const loginAddUserBtn = document.querySelector('#login-add-user');
-const createProfilePanel = document.querySelector('#create-profile-panel');
-const createAvatarPreview = document.querySelector('#create-avatar-preview');
-const createAvatarInput = document.querySelector('#create-avatar-input');
-const createNameInput = document.querySelector('#create-name');
-const createPasswordInput = document.querySelector('#create-password');
-const createSubmitBtn = document.querySelector('#create-submit');
-const createCancelBtn = document.querySelector('#create-cancel');
 
 let selectedLoginProfile = null;
-let pendingAvatarData = null;
 
 function resetLoginScreen() {
   loginFormEl.hidden = true;
-  createProfilePanel.hidden = true;
   loginProfilesEl.hidden = false;
-  loginAddUserBtn.hidden = false;
   selectedLoginProfile = null;
   loginPasswordEl.value = '';
   loginHintEl.textContent = '';
@@ -523,7 +524,6 @@ function renderProfileList() {
 function selectProfile(profile) {
   selectedLoginProfile = profile;
   loginProfilesEl.hidden = true;
-  loginAddUserBtn.hidden = true;
   loginFormEl.hidden = false;
   loginAvatarEl.src = profile.avatar;
   loginUsernameEl.textContent = profile.name;
@@ -564,52 +564,6 @@ loginPasswordEl.addEventListener('keydown', (e) => {
 });
 
 loginBackBtn.addEventListener('click', resetLoginScreen);
-
-loginAddUserBtn.addEventListener('click', () => {
-  loginProfilesEl.hidden = true;
-  loginAddUserBtn.hidden = true;
-  createProfilePanel.hidden = false;
-  createNameInput.value = '';
-  createPasswordInput.value = '';
-  createAvatarPreview.src = DEFAULT_AVATAR;
-  pendingAvatarData = null;
-  createNameInput.focus();
-});
-
-createAvatarInput.addEventListener('change', () => {
-  const file = createAvatarInput.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    pendingAvatarData = reader.result;
-    createAvatarPreview.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-createSubmitBtn.addEventListener('click', () => {
-  const name = createNameInput.value.trim();
-  if (!name) {
-    createNameInput.focus();
-    return;
-  }
-  createProfile(name, pendingAvatarData, createPasswordInput.value || null);
-  createProfilePanel.hidden = true;
-  resetLoginScreen();
-});
-
-createCancelBtn.addEventListener('click', () => {
-  createProfilePanel.hidden = true;
-  resetLoginScreen();
-});
-
-createNameInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') createSubmitBtn.click();
-});
-
-createPasswordInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') createSubmitBtn.click();
-});
 
 window.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && scene.dataset.view === 'desktop') {
@@ -689,6 +643,9 @@ const suppressClickAfterDrag = (event) => {
 
 setupTaskbarReorder();
 setupDesktopIcons();
+
+activeProfileId = 'guest';
+showDesktop();
 
 function setupTaskbarReorder() {
   const taskbar = document.querySelector('.taskbar');
@@ -2854,11 +2811,10 @@ function buildSolitaireApp(windowElement) {
 
   const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
   const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-  const SUIT_SYMBOL = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
+  const SUIT_SYMBOL = { hearts: '\u2665', diamonds: '\u2666', clubs: '\u2663', spades: '\u2660' };
   const SUIT_COLOR = { hearts: '#e74c3c', diamonds: '#e74c3c', clubs: '#2c3e50', spades: '#2c3e50' };
 
   let stock = [], waste = [], foundations = [[],[],[],[]], tableau = [[],[],[],[],[],[],[]];
-  let dragState = null;
 
   function createDeck() {
     const deck = [];
@@ -2896,10 +2852,9 @@ function buildSolitaireApp(windowElement) {
     }
   }
 
-  function cardId(c) { return c.suit + c.rank; }
+  function cid(c) { return c.suit + c.rank; }
   function isRed(c) { return c.suit === 'hearts' || c.suit === 'diamonds'; }
   function rankVal(c) { return RANKS.indexOf(c.rank); }
-  function foundationTarget(fi) { return SUITS[fi]; }
 
   function canPlaceOnTableau(card, pile) {
     if (pile.length === 0) return card.rank === 'K';
@@ -2909,26 +2864,10 @@ function buildSolitaireApp(windowElement) {
 
   function canPlaceOnFoundation(card, fi) {
     const pile = foundations[fi];
-    if (pile.length === 0) return card.rank === 'A' && card.suit === foundationTarget(fi);
+    const targetSuit = SUITS[fi];
+    if (pile.length === 0) return card.rank === 'A' && card.suit === targetSuit;
     const top = pile[pile.length - 1];
     return card.suit === top.suit && rankVal(card) === rankVal(top) + 1;
-  }
-
-  function findSource(cardId) {
-    for (let i = 0; i < waste.length; i++) {
-      if (cardId === cardId(waste[i])) return { pile: 'waste', index: i };
-    }
-    for (let fi = 0; fi < 4; fi++) {
-      for (let i = 0; i < foundations[fi].length; i++) {
-        if (cardId === cardId(foundations[fi][i])) return { pile: 'foundation', fi, index: i };
-      }
-    }
-    for (let ti = 0; ti < 7; ti++) {
-      for (let i = 0; i < tableau[ti].length; i++) {
-        if (cardId === cardId(tableau[ti][i])) return { pile: 'tableau', ti, index: i };
-      }
-    }
-    return null;
   }
 
   function flipTopOfTableau() {
@@ -2947,16 +2886,13 @@ function buildSolitaireApp(windowElement) {
   function render() {
     board.textContent = '';
     board.style.display = 'grid';
-    board.style.gridTemplateColumns = 'repeat(7, 1fr)';
-    board.style.gridTemplateRows = 'auto auto';
-    board.style.gap = '6px';
-    board.style.padding = '8px';
-    board.style.height = '100%';
-    board.style.alignContent = 'start';
+    board.style.gridTemplateRows = 'auto 1fr';
+    board.style.gap = '4px';
+    board.style.padding = '6px';
 
     const topRow = document.createElement('div');
     topRow.className = 'solitaire-top-row';
-    topRow.style.cssText = 'grid-column:1/-1;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;';
+    topRow.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:4px;';
 
     const stockCell = document.createElement('div');
     stockCell.className = 'solitaire-cell solitaire-stock';
@@ -2969,7 +2905,7 @@ function buildSolitaireApp(windowElement) {
       empty.className = 'solitaire-card solitaire-empty';
       empty.addEventListener('click', resetStock);
       const recycle = document.createElement('span');
-      recycle.textContent = '↻';
+      recycle.textContent = '\u21BB';
       recycle.style.cssText = 'font-size:24px;opacity:0.4;';
       empty.append(recycle);
       stockCell.append(empty);
@@ -2995,7 +2931,7 @@ function buildSolitaireApp(windowElement) {
       if (foundations[fi].length > 0) {
         const card = foundations[fi][foundations[fi].length - 1];
         const cardEl = createCardEl(card, true);
-        bindDrag(cardEl, card, 'foundation');
+        bindDrag(cardEl, card, 'foundation', fi);
         cell.append(cardEl);
       } else {
         const empty = document.createElement('div');
@@ -3003,7 +2939,7 @@ function buildSolitaireApp(windowElement) {
         empty.dataset.foundation = fi;
         const sym = document.createElement('span');
         sym.textContent = SUIT_SYMBOL[SUITS[fi]];
-        sym.style.cssText = `font-size:20px;color:${SUIT_COLOR[SUITS[fi]]};opacity:0.25;`;
+        sym.style.cssText = 'font-size:20px;color:' + SUIT_COLOR[SUITS[fi]] + ';opacity:0.25;';
         empty.append(sym);
         cell.append(empty);
       }
@@ -3015,7 +2951,7 @@ function buildSolitaireApp(windowElement) {
 
     const tableauRow = document.createElement('div');
     tableauRow.className = 'solitaire-tableau-row';
-    tableauRow.style.cssText = 'grid-column:1/-1;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;';
+    tableauRow.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:4px;';
 
     for (let ti = 0; ti < 7; ti++) {
       const col = document.createElement('div');
@@ -3030,7 +2966,7 @@ function buildSolitaireApp(windowElement) {
         pile.forEach((card, i) => {
           const cardEl = createCardEl(card, card.faceUp);
           cardEl.style.position = 'relative';
-          cardEl.style.marginTop = i > 0 ? (card.faceUp ? '-52px' : '-38px') : '0';
+          cardEl.style.marginTop = i > 0 ? (card.faceUp ? '-55%' : '-40%') : '0';
           if (card.faceUp) {
             bindDrag(cardEl, card, 'tableau', ti, i);
           }
@@ -3043,22 +2979,23 @@ function buildSolitaireApp(windowElement) {
     board.append(tableauRow);
 
     if (checkWin()) {
-      statusEl.textContent = 'You win! 🎉';
+      statusEl.textContent = 'You win!';
+    } else {
+      statusEl.textContent = 'Klondike Solitaire';
     }
   }
 
   function createCardEl(card, faceUp) {
     const el = document.createElement('div');
-    el.className = `solitaire-card ${faceUp ? 'face-up' : 'face-down'}`;
-    el.dataset.cardId = cardId(card);
+    el.className = 'solitaire-card ' + (faceUp ? 'face-up' : 'face-down');
+    el.dataset.cardId = cid(card);
     if (faceUp) {
       const color = SUIT_COLOR[card.suit];
       const sym = SUIT_SYMBOL[card.suit];
-      el.innerHTML = `
-        <div class="solitaire-card-tl"><span style="color:${color}">${card.rank}</span><span style="color:${color};font-size:0.7em">${sym}</span></div>
-        <div class="solitaire-card-center" style="color:${color};font-size:1.4em">${sym}</div>
-        <div class="solitaire-card-br"><span style="color:${color}">${card.rank}</span><span style="color:${color};font-size:0.7em">${sym}</span></div>
-      `;
+      el.innerHTML =
+        '<div class="solitaire-card-tl"><span style="color:' + color + '">' + card.rank + '</span><span style="color:' + color + ';font-size:0.7em">' + sym + '</span></div>' +
+        '<div class="solitaire-card-center" style="color:' + color + ';font-size:1.4em">' + sym + '</div>' +
+        '<div class="solitaire-card-br"><span style="color:' + color + '">' + card.rank + '</span><span style="color:' + color + ';font-size:0.7em">' + sym + '</span></div>';
     } else {
       el.innerHTML = '<div class="solitaire-card-back"></div>';
     }
@@ -3082,22 +3019,17 @@ function buildSolitaireApp(windowElement) {
     render();
   }
 
-  function bindDrag(el, card, sourceType, sourceTi, sourceIdx) {
-    el.addEventListener('pointerdown', (e) => {
+  function bindDrag(el, card, sourceType, sourceFi, sourceTi, sourceIdx) {
+    el.addEventListener('pointerdown', function(e) {
       if (e.button !== 0) return;
       e.preventDefault();
-      const rect = el.getBoundingClientRect();
 
       let cards = [card];
       if (sourceType === 'tableau' && sourceIdx !== undefined) {
         cards = tableau[sourceTi].slice(sourceIdx);
-      } else if (sourceType === 'waste') {
-        cards = [waste[waste.length - 1]];
-      } else if (sourceType === 'foundation') {
-        const fi = parseInt(el.closest('.solitaire-foundation')?.dataset.foundation ?? -1);
-        if (fi >= 0) cards = [foundations[fi][foundations[fi].length - 1]];
       }
 
+      const rect = el.getBoundingClientRect();
       const ghost = el.cloneNode(true);
       ghost.className = 'solitaire-card face-up solitaire-drag-ghost';
       ghost.style.position = 'fixed';
@@ -3109,29 +3041,24 @@ function buildSolitaireApp(windowElement) {
 
       const offsetX = e.clientX - rect.left;
       const offsetY = e.clientY - rect.top;
-
       el.style.opacity = '0.3';
 
-      dragState = { cards, sourceType, sourceTi, sourceIdx, ghost, offsetX, offsetY, originEl: el, dropped: false };
-
-      const onMove = (me) => {
+      const onMove = function(me) {
         ghost.style.left = (me.clientX - offsetX) + 'px';
         ghost.style.top = (me.clientY - offsetY) + 'px';
       };
 
-      const onUp = (ue) => {
+      const onUp = function(ue) {
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
         ghost.remove();
         el.style.opacity = '';
 
         const target = findDropTarget(ue.clientX, ue.clientY);
-        if (target && tryDrop(cards, sourceType, sourceTi, target)) {
-          dragState.dropped = true;
+        if (target && tryDrop(cards, sourceType, sourceTi, sourceFi, target)) {
           flipTopOfTableau();
         }
         render();
-        dragState = null;
       };
 
       window.addEventListener('pointermove', onMove);
@@ -3142,15 +3069,15 @@ function buildSolitaireApp(windowElement) {
   }
 
   function findDropTarget(x, y) {
-    const el = document.elementFromPoint(x, y);
-    if (!el) return null;
+    const elem = document.elementFromPoint(x, y);
+    if (!elem) return null;
 
-    const foundationCell = el.closest('.solitaire-foundation');
+    const foundationCell = elem.closest('.solitaire-foundation');
     if (foundationCell) {
       return { type: 'foundation', fi: parseInt(foundationCell.dataset.foundation) };
     }
 
-    const tableauCol = el.closest('.solitaire-column');
+    const tableauCol = elem.closest('.solitaire-column');
     if (tableauCol) {
       return { type: 'tableau', ti: parseInt(tableauCol.dataset.tableau) };
     }
@@ -3158,45 +3085,151 @@ function buildSolitaireApp(windowElement) {
     return null;
   }
 
-  function tryDrop(cards, sourceType, sourceTi, target) {
+  function tryDrop(cards, sourceType, sourceTi, sourceFi, target) {
     const first = cards[0];
 
     if (target.type === 'foundation') {
       if (cards.length !== 1) return false;
       if (!canPlaceOnFoundation(first, target.fi)) return false;
-      removeCards(sourceType, sourceTi);
+      removeFromSource(sourceType, sourceTi, sourceFi, cards.length);
       foundations[target.fi].push(first);
       return true;
     }
 
     if (target.type === 'tableau') {
       if (!canPlaceOnTableau(first, tableau[target.ti])) return false;
-      removeCards(sourceType, sourceTi);
-      tableau[target.ti].push(...cards);
+      removeFromSource(sourceType, sourceTi, sourceFi, cards.length);
+      tableau[target.ti].push.apply(tableau[target.ti], cards);
       return true;
     }
 
     return false;
   }
 
-  function removeCards(sourceType, sourceTi, count) {
+  function removeFromSource(sourceType, sourceTi, sourceFi, count) {
     if (sourceType === 'waste') {
-      waste.pop();
+      waste.splice(waste.length - count, count);
     } else if (sourceType === 'foundation') {
-      for (let fi = 0; fi < 4; fi++) {
-        const pile = foundations[fi];
-        if (pile.length > 0 && pile[pile.length - 1] === arguments[3]) {
-          pile.pop();
-          return;
-        }
-      }
+      foundations[sourceFi].splice(foundations[sourceFi].length - count, count);
     } else if (sourceType === 'tableau') {
-      tableau[sourceTi].splice(-cards.length);
+      tableau[sourceTi].splice(tableau[sourceTi].length - count, count);
     }
   }
 
-  newBtn.addEventListener('click', () => { deal(); render(); });
+  newBtn.addEventListener('click', function() { deal(); render(); });
   deal();
+  render();
+  return shell;
+}
+
+function buildProfilesApp(windowElement) {
+  const shell = document.createElement('div');
+  shell.className = 'profiles-shell';
+  shell.innerHTML = `
+    <h2>Profiles</h2>
+    <div class="profiles-list"></div>
+    <div class="profiles-create" hidden>
+      <div class="profiles-create-avatar-wrap">
+        <img class="profiles-create-avatar" src="${DEFAULT_AVATAR}" alt="" />
+        <label class="profiles-create-avatar-btn" for="profiles-avatar-input">Choose Photo</label>
+        <input type="file" id="profiles-avatar-input" accept="image/*" hidden />
+      </div>
+      <input class="profiles-create-name" type="text" placeholder="Username" maxlength="20" />
+      <input class="profiles-create-password" type="password" placeholder="Password (optional)" />
+      <div class="profiles-create-actions">
+        <button type="button" class="profiles-create-submit">Create</button>
+        <button type="button" class="profiles-create-cancel">Cancel</button>
+      </div>
+    </div>
+    <button type="button" class="profiles-add-btn">+ Add User</button>
+  `;
+
+  const listEl = shell.querySelector('.profiles-list');
+  const createPanel = shell.querySelector('.profiles-create');
+  const addBtn = shell.querySelector('.profiles-add-btn');
+  const createNameInput = shell.querySelector('.profiles-create-name');
+  const createPasswordInput = shell.querySelector('.profiles-create-password');
+  const createAvatarPreview = shell.querySelector('.profiles-create-avatar');
+  const createAvatarInput = shell.querySelector('#profiles-avatar-input');
+  const createSubmitBtn = shell.querySelector('.profiles-create-submit');
+  const createCancelBtn = shell.querySelector('.profiles-create-cancel');
+
+  let pendingAvatarData = null;
+
+  createAvatarInput.addEventListener('change', () => {
+    const file = createAvatarInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      pendingAvatarData = reader.result;
+      createAvatarPreview.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  addBtn.addEventListener('click', () => {
+    createPanel.hidden = false;
+    addBtn.hidden = true;
+    listEl.hidden = true;
+    createNameInput.value = '';
+    createPasswordInput.value = '';
+    createAvatarPreview.src = DEFAULT_AVATAR;
+    pendingAvatarData = null;
+    createNameInput.focus();
+  });
+
+  createCancelBtn.addEventListener('click', () => {
+    createPanel.hidden = true;
+    addBtn.hidden = false;
+    listEl.hidden = false;
+  });
+
+  createSubmitBtn.addEventListener('click', () => {
+    const name = createNameInput.value.trim();
+    if (!name) {
+      createNameInput.focus();
+      return;
+    }
+    createProfile(name, pendingAvatarData, createPasswordInput.value || null);
+    createPanel.hidden = true;
+    addBtn.hidden = false;
+    listEl.hidden = false;
+    render();
+  });
+
+  createNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') createSubmitBtn.click();
+  });
+
+  createPasswordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') createSubmitBtn.click();
+  });
+
+  function render() {
+    listEl.textContent = '';
+    profiles.forEach((profile) => {
+      const card = document.createElement('div');
+      card.className = 'profiles-card';
+      card.innerHTML = `
+        <img class="profiles-card-avatar" src="${profile.avatar}" alt="${profile.name}" />
+        <div class="profiles-card-info">
+          <span class="profiles-card-name">${profile.name}</span>
+          <span class="profiles-card-id">${profile.id}</span>
+        </div>
+        ${profile.id !== 'guest' ? '<button type="button" class="profiles-card-delete" aria-label="Delete profile">&times;</button>' : ''}
+      `;
+      const deleteBtn = card.querySelector('.profiles-card-delete');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+          if (profile.id === activeProfileId) return;
+          deleteProfile(profile.id);
+          render();
+        });
+      }
+      listEl.append(card);
+    });
+  }
+
   render();
   return shell;
 }

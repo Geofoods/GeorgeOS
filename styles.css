@@ -2130,7 +2130,8 @@ html[data-theme="windowsxp"] .desktop-icon-label {
 }
 
 @media (max-width: 700px) {
-  .bottom-button {
+  .login-panel,
+  .create-profile-panel {
     bottom: 20px;
   }
 
@@ -2204,7 +2205,8 @@ html[data-theme="windowsxp"] .desktop-icon-label {
 
 @media (prefers-reduced-motion: reduce) {
   .scene > *,
-  .bottom-button {
+  .login-panel,
+  .create-profile-panel {
     animation: none !important;
     transition: none !important;
   }
@@ -2789,7 +2791,8 @@ html[data-theme="windowsxp"] .resize-handle {
 
 @media (prefers-reduced-motion: reduce) {
   .welcome-clock,
-  .bottom-button,
+  .login-panel,
+  .create-profile-panel,
   .welcome-time,
   .view {
     animation: none !important;
@@ -2800,17 +2803,17 @@ html[data-theme="windowsxp"] .resize-handle {
 .solitaire-shell {
   display: flex;
   flex-direction: column;
-  height: 100%;
   color: #eef6ff;
-  gap: 8px;
+  gap: 6px;
+  height: 100%;
 }
 
 .solitaire-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 14px;
+  padding: 6px 10px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
@@ -2818,10 +2821,11 @@ html[data-theme="windowsxp"] .resize-handle {
 .solitaire-new {
   border: 0;
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 6px 14px;
   background: rgba(14, 146, 255, 0.9);
   color: #fff;
   font: inherit;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   transition: transform 160ms ease, background-color 160ms ease;
@@ -2833,7 +2837,7 @@ html[data-theme="windowsxp"] .resize-handle {
 }
 
 .solitaire-status {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: rgba(238, 246, 255, 0.78);
 }
@@ -2842,29 +2846,32 @@ html[data-theme="windowsxp"] .resize-handle {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 4px;
+  padding: 6px;
 }
 
 .solitaire-cell {
   width: 100%;
-  aspect-ratio: 5 / 7;
-  max-height: 100%;
   position: relative;
 }
 
 .solitaire-card {
   width: 100%;
   aspect-ratio: 5 / 7;
-  border-radius: 6px;
+  border-radius: 5px;
   position: relative;
   overflow: hidden;
   user-select: none;
   touch-action: none;
+  flex-shrink: 0;
 }
 
 .solitaire-card.face-down {
   background: linear-gradient(135deg, #1a5276 0%, #154360 50%, #1a5276 100%);
   border: 2px solid #2980b9;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .solitaire-card-back {
@@ -2873,17 +2880,17 @@ html[data-theme="windowsxp"] .resize-handle {
   background:
     repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.06) 3px, rgba(255,255,255,0.06) 6px),
     linear-gradient(135deg, #1a5276 0%, #154360 100%);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .solitaire-card.face-up {
   background: #fff;
   border: 2px solid #bdc3c7;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 4px 5px;
+  padding: 3px 4px;
   cursor: grab;
 }
 
@@ -2896,7 +2903,7 @@ html[data-theme="windowsxp"] .resize-handle {
   flex-direction: column;
   align-items: flex-start;
   line-height: 1;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 800;
 }
 
@@ -2912,7 +2919,7 @@ html[data-theme="windowsxp"] .resize-handle {
   flex-direction: column;
   align-items: flex-end;
   line-height: 1;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 800;
   transform: rotate(180deg);
 }
@@ -2920,11 +2927,12 @@ html[data-theme="windowsxp"] .resize-handle {
 .solitaire-empty {
   background: rgba(255, 255, 255, 0.06);
   border: 2px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 6px;
+  border-radius: 5px;
   display: grid;
   place-items: center;
   width: 100%;
   aspect-ratio: 5 / 7;
+  flex-shrink: 0;
 }
 
 .solitaire-drag-ghost {
@@ -2935,5 +2943,176 @@ html[data-theme="windowsxp"] .resize-handle {
 .solitaire-column {
   display: flex;
   flex-direction: column;
-  min-height: 70%;
+}
+
+.profiles-shell {
+  display: grid;
+  gap: 12px;
+  color: #eef6ff;
+}
+
+.profiles-shell h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.profiles-list {
+  display: grid;
+  gap: 8px;
+}
+
+.profiles-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profiles-card-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+}
+
+.profiles-card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.profiles-card-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.profiles-card-id {
+  font-size: 0.72rem;
+  color: rgba(238, 246, 255, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profiles-card-delete {
+  border: 0;
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 80, 80, 0.7);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 160ms ease;
+}
+
+.profiles-card-delete:hover {
+  background: rgba(255, 60, 60, 1);
+}
+
+.profiles-add-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(14, 146, 255, 0.9);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.profiles-add-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(14, 146, 255, 1);
+}
+
+.profiles-create {
+  display: grid;
+  gap: 10px;
+}
+
+.profiles-create-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profiles-create-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.profiles-create-avatar-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profiles-create-name,
+.profiles-create-password {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.09);
+  color: inherit;
+  font: inherit;
+}
+
+.profiles-create-name:focus,
+.profiles-create-password:focus {
+  outline: 2px solid rgba(14, 146, 255, 0.6);
+  outline-offset: 0;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.profiles-create-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.profiles-create-submit {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(14, 146, 255, 0.9);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profiles-create-submit:hover {
+  background: rgba(14, 146, 255, 1);
+}
+
+.profiles-create-cancel {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
