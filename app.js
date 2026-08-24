@@ -507,6 +507,7 @@ function resetLoginScreen() {
 
 function renderProfileList() {
   loginProfilesEl.textContent = '';
+
   profiles.forEach((profile) => {
     const card = document.createElement('button');
     card.type = 'button';
@@ -516,7 +517,14 @@ function renderProfileList() {
       <span class="login-profile-name">${profile.name}</span>
       ${profile.password ? '<span class="login-profile-lock" aria-label="Has password">&#128274;</span>' : ''}
     `;
-    card.addEventListener('click', () => selectProfile(profile));
+    card.addEventListener('click', () => {
+      if (profiles.length === 1 && !profile.password) {
+        activeProfileId = profile.id;
+        unlockDesktop();
+        return;
+      }
+      selectProfile(profile);
+    });
     loginProfilesEl.append(card);
   });
 }
@@ -643,9 +651,11 @@ const suppressClickAfterDrag = (event) => {
 
 setupTaskbarReorder();
 setupDesktopIcons();
-
-activeProfileId = 'guest';
-showDesktop();
+const guestProfile = profiles.find((p) => p.id === 'guest');
+if (guestProfile) {
+  selectProfile(guestProfile);
+}
+renderProfileList();
 
 function setupTaskbarReorder() {
   const taskbar = document.querySelector('.taskbar');
