@@ -8,7 +8,16 @@
   --glass: rgba(220, 248, 255, 0.26);
   --glass-edge: rgba(255, 255, 255, 0.5);
   --text: #dff3ff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
   --georgeos-icon-size: 28px;
+}
+
+html[data-mode="light"] {
+  color-scheme: light;
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-edge: rgba(255, 255, 255, 0.7);
+  --text: #1a2a3a;
+  --text-secondary: rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -2272,6 +2281,45 @@ html[data-theme="windowsxp"] .desktop-icon-label {
   cursor: pointer;
 }
 
+.customize-mode {
+  display: flex;
+  gap: 6px;
+}
+
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.mode-toggle.active {
+  background: rgba(14, 146, 255, 0.25);
+  border-color: rgba(14, 146, 255, 0.55);
+  color: #fff;
+}
+
+.mode-toggle svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
 .theme-option {
   display: flex;
   align-items: center;
@@ -2316,6 +2364,112 @@ html[data-theme="windowsxp"] .desktop-icon-label {
 
 .theme-swatch-windowsxp {
   background: linear-gradient(180deg, #2f7fe0 0%, #0653d1 100%);
+}
+
+html[data-mode="light"] .taskbar {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+html[data-mode="light"] .taskbar-app {
+  background: rgba(255, 255, 255, 0.45);
+  color: #1a2a3a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+html[data-mode="light"] .taskbar-app:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+html[data-mode="light"] .taskbar-app.active {
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+html[data-mode="light"] .workspace-pill {
+  background: rgba(255, 255, 255, 0.45);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 8px 18px rgba(0, 0, 0, 0.08);
+  color: #1a2a3a;
+}
+
+html[data-mode="light"] .workspace-pill:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+html[data-mode="light"] .widget {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    0 8px 18px rgba(0, 0, 0, 0.08);
+  color: #1a2a3a;
+  text-shadow: none;
+}
+
+html[data-mode="light"] .app-window {
+  background: rgba(245, 248, 252, 0.85);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+}
+
+html[data-mode="light"] .window-titlebar {
+  color: #1a2a3a;
+}
+
+html[data-mode="light"] .desktop-icon-label {
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), 0 0 2px rgba(0, 0, 0, 0.4);
+}
+
+html[data-mode="light"] .customize-shell {
+  color: #1a2a3a;
+}
+
+html[data-mode="light"] .customize-intro {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+html[data-mode="light"] .customize-setting-label {
+  color: #1a2a3a;
+}
+
+html[data-mode="light"] .customize-setting-value {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+html[data-mode="light"] .theme-option {
+  background: rgba(255, 255, 255, 0.45);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+html[data-mode="light"] .theme-option:hover {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+html[data-mode="light"] .theme-option.active {
+  background: rgba(14, 146, 255, 0.12);
+  border-color: rgba(14, 146, 255, 0.5);
+}
+
+html[data-mode="light"] .theme-label {
+  color: #1a2a3a;
+}
+
+html[data-mode="light"] .login-profile-name {
+  color: #1a2a3a;
+}
+
+html[data-mode="light"] .login-username {
+  color: #1a2a3a;
 }
 
 html[data-theme="windows11"] {
@@ -2476,7 +2630,7 @@ html[data-theme="windows11"] .login-profiles {
 }
 
 html[data-theme="windows11"] .login-profile-card {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(32, 32, 32, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 16px 20px;
@@ -2484,7 +2638,7 @@ html[data-theme="windows11"] .login-profile-card {
 }
 
 html[data-theme="windows11"] .login-profile-card:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(44, 44, 44, 0.85);
   border-color: rgba(255, 255, 255, 0.14);
 }
 

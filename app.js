@@ -137,6 +137,29 @@ function setTheme(themeId) {
   document.documentElement.dataset.theme = 'macos';
 })();
 
+function setMode(mode) {
+  const next = mode === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.mode = next;
+  try {
+    localStorage.setItem('georgeos-mode', next);
+  } catch {}
+  document.querySelectorAll('.mode-toggle').forEach((button) => {
+    button.classList.toggle('active', button.dataset.mode === next);
+  });
+  return next;
+}
+
+(function loadSavedMode() {
+  try {
+    const saved = localStorage.getItem('georgeos-mode');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.dataset.mode = saved;
+      return;
+    }
+  } catch {}
+  document.documentElement.dataset.mode = 'dark';
+})();
+
 const ICON_SIZE_BASE = 28;
 const TEXT_SIZE_BASE = 16;
 
@@ -189,11 +212,12 @@ function loadProfiles() {
   try {
     const stored = JSON.parse(localStorage.getItem('georgeos-profiles'));
     if (Array.isArray(stored)) {
-      const filtered = stored.filter((p) => p && p.id && p.id !== 'default' && p.name);
-      if (filtered.length && !filtered.some((p) => p.id === 'guest')) {
-        filtered.unshift(GUEST_PROFILE);
+      const filtered = stored.filter((p) => p && p.id && p.id !== 'default' && p.name && p.avatar);
+      const normalized = filtered.map((p) => (p.id === 'guest' ? GUEST_PROFILE : p));
+      if (normalized.length && !normalized.some((p) => p.id === 'guest')) {
+        normalized.unshift(GUEST_PROFILE);
       }
-      return filtered.length ? filtered : [GUEST_PROFILE];
+      return normalized.length ? normalized : [GUEST_PROFILE];
     }
   } catch {}
   return [GUEST_PROFILE];
@@ -526,7 +550,7 @@ function renderProfileList() {
     card.type = 'button';
     card.className = 'login-profile-card';
     card.innerHTML = `
-      <img class="login-profile-avatar" src="${profile.avatar}" alt="${profile.name}" />
+      <img class="login-profile-avatar" src="${profile.avatar || DEFAULT_AVATAR}" alt="${profile.name}" />
       <span class="login-profile-name">${profile.name}</span>
       ${profile.password ? '<span class="login-profile-lock" aria-label="Has password">&#128274;</span>' : ''}
     `;
@@ -546,7 +570,7 @@ function selectProfile(profile) {
   selectedLoginProfile = profile;
   loginProfilesEl.hidden = true;
   loginFormEl.hidden = false;
-  loginAvatarEl.src = profile.avatar;
+  loginAvatarEl.src = profile.avatar || DEFAULT_AVATAR;
   loginUsernameEl.textContent = profile.name;
   loginPasswordEl.value = '';
   loginHintEl.textContent = '';
@@ -3266,6 +3290,21 @@ function buildCustomizeApp(windowElement) {
     <div class="customize-settings">
       <div class="customize-setting">
         <div class="customize-setting-copy">
+          <span class="customize-setting-label">Mode</span>
+        </div>
+        <div class="customize-mode">
+          <button type="button" class="mode-toggle${document.documentElement.dataset.mode === 'dark' ? ' active' : ''}" data-mode="dark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            Dark
+          </button>
+          <button type="button" class="mode-toggle${document.documentElement.dataset.mode === 'light' ? ' active' : ''}" data-mode="light">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            Light
+          </button>
+        </div>
+      </div>
+      <div class="customize-setting">
+        <div class="customize-setting-copy">
           <span class="customize-setting-label">Icon size</span>
           <span class="customize-setting-value">${Math.round(getIconScale() * 100)}%</span>
         </div>
@@ -3295,6 +3334,10 @@ function buildCustomizeApp(windowElement) {
     const scale = Number(textRange.value) / 100;
     applyTextScale(scale);
     textRange.closest('.customize-setting').querySelector('.customize-setting-value').textContent = `${Math.round(scale * 100)}%`;
+  });
+
+  shell.querySelectorAll('.mode-toggle').forEach((button) => {
+    button.addEventListener('click', () => setMode(button.dataset.mode));
   });
 
   const list = shell.querySelector('.customize-themes');
