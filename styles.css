@@ -2717,6 +2717,165 @@ html[data-theme="windows11"] .create-profile-cancel {
   border-radius: 8px;
 }
 
+html[data-theme="windows11"][data-mode="light"] .screen {
+  background:
+    radial-gradient(circle at 80% 12%, rgba(255, 196, 92, 0.25), transparent 26%),
+    radial-gradient(circle at 24% 28%, rgba(64, 148, 255, 0.3), transparent 30%),
+    radial-gradient(circle at 55% 105%, rgba(122, 61, 190, 0.25), transparent 36%),
+    linear-gradient(180deg, #e8eef7 0%, #c4d7f2 60%, #dce6f5 100%);
+}
+
+html[data-theme="windows11"][data-mode="light"] .taskbar {
+  background: rgba(243, 243, 243, 0.82);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+}
+
+html[data-theme="windows11"][data-mode="light"] .taskbar-app {
+  background: transparent;
+}
+
+html[data-theme="windows11"][data-mode="light"] .taskbar-app:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme="windows11"][data-mode="light"] .taskbar-app.active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html[data-theme="windows11"][data-mode="light"] .taskbar-app.active::after {
+  background: #0078d4;
+}
+
+html[data-theme="windows11"][data-mode="light"] .workspace-pill {
+  background: rgba(243, 243, 243, 0.82);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .workspace-pill:hover {
+  background: rgba(230, 230, 230, 0.9);
+}
+
+html[data-theme="windows11"][data-mode="light"] .widget {
+  background: rgba(243, 243, 243, 0.82);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
+html[data-theme="windows11"][data-mode="light"] .widget-calendar-day.today {
+  background: #0078d4;
+  color: #fff;
+}
+
+html[data-theme="windows11"][data-mode="light"] .analog-second {
+  stroke: #0078d4;
+}
+
+html[data-theme="windows11"][data-mode="light"] .analog-face {
+  stroke: rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="windows11"][data-mode="light"] .app-window {
+  background: rgba(249, 249, 249, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="windows11"][data-mode="light"] .window-titlebar {
+  background: rgba(0, 0, 0, 0.03);
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .window-control {
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .window-control:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme="windows11"][data-mode="light"] .window-control.close:hover {
+  background: rgba(224, 49, 49, 0.9);
+  color: #fff;
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-profile-card {
+  background: rgba(243, 243, 243, 0.88);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-profile-card:hover {
+  background: rgba(230, 230, 230, 0.92);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-profile-avatar {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-profile-name {
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-form {
+  background: rgba(243, 243, 243, 0.92);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-username {
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-password {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-submit {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-submit:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-back {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="windows11"][data-mode="light"] .login-profile-lock {
+  opacity: 0.4;
+}
+
+html[data-theme="windows11"][data-mode="light"] .create-profile-form {
+  background: rgba(243, 243, 243, 0.92);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="windows11"][data-mode="light"] .create-profile-name,
+html[data-theme="windows11"][data-mode="light"] .create-profile-password {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .create-profile-submit {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+}
+
+html[data-theme="windows11"][data-mode="light"] .create-profile-cancel {
+  color: rgba(0, 0, 0, 0.5);
+}
+
 html[data-theme="windowsxp"] .screen {
   background: linear-gradient(180deg, #16b9ff 0%, #2f7fe0 38%, #0653d1 100%);
 }

@@ -532,6 +532,7 @@ const loginSubmitBtn = document.querySelector('#login-submit');
 const loginBackBtn = document.querySelector('#login-back');
 
 let selectedLoginProfile = null;
+let firstLogin = true;
 
 function resetLoginScreen() {
   loginFormEl.hidden = true;
@@ -539,6 +540,14 @@ function resetLoginScreen() {
   selectedLoginProfile = null;
   loginPasswordEl.value = '';
   loginHintEl.textContent = '';
+  if (firstLogin) {
+    firstLogin = false;
+    const guest = profiles.find((p) => p.id === 'guest');
+    if (guest) {
+      selectProfile(guest);
+      return;
+    }
+  }
   renderProfileList();
 }
 
@@ -609,6 +618,8 @@ loginPasswordEl.addEventListener('keydown', (e) => {
 });
 
 loginBackBtn.addEventListener('click', resetLoginScreen);
+
+resetLoginScreen();
 
 window.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && scene.dataset.view === 'desktop') {
