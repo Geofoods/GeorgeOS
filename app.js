@@ -113,13 +113,21 @@ const themeOptions = [
   { id: 'windowsxp', label: 'Windows XP' },
 ];
 
+let activeProfileId = null;
+
+function profileKey(key) {
+  return activeProfileId ? `georgeos-${activeProfileId}-${key}` : `georgeos-${key}`;
+}
+
 function setTheme(themeId) {
   const valid = themeOptions.some((theme) => theme.id === themeId);
   const next = valid ? themeId : 'macos';
   document.documentElement.dataset.theme = next;
-  try {
-    localStorage.setItem('georgeos-theme', next);
-  } catch {}
+  if (activeProfileId !== 'guest') {
+    try {
+      localStorage.setItem(profileKey('theme'), next);
+    } catch {}
+  }
   document.querySelectorAll('.theme-option').forEach((button) => {
     button.classList.toggle('active', button.dataset.theme === next);
   });
@@ -128,7 +136,7 @@ function setTheme(themeId) {
 
 (function loadSavedTheme() {
   try {
-    const saved = localStorage.getItem('georgeos-theme');
+    const saved = localStorage.getItem(profileKey('theme'));
     if (saved && themeOptions.some((t) => t.id === saved)) {
       document.documentElement.dataset.theme = saved;
       return;
@@ -140,9 +148,11 @@ function setTheme(themeId) {
 function setMode(mode) {
   const next = mode === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.mode = next;
-  try {
-    localStorage.setItem('georgeos-mode', next);
-  } catch {}
+  if (activeProfileId !== 'guest') {
+    try {
+      localStorage.setItem(profileKey('mode'), next);
+    } catch {}
+  }
   document.querySelectorAll('.mode-toggle').forEach((button) => {
     button.classList.toggle('active', button.dataset.mode === next);
   });
@@ -151,7 +161,7 @@ function setMode(mode) {
 
 (function loadSavedMode() {
   try {
-    const saved = localStorage.getItem('georgeos-mode');
+    const saved = localStorage.getItem(profileKey('mode'));
     if (saved === 'light' || saved === 'dark') {
       document.documentElement.dataset.mode = saved;
       return;
@@ -165,7 +175,7 @@ const TEXT_SIZE_BASE = 16;
 
 function readStoredNumber(key, fallback) {
   try {
-    const value = Number(localStorage.getItem(key));
+    const value = Number(localStorage.getItem(profileKey(key)));
     return Number.isFinite(value) ? value : fallback;
   } catch {
     return fallback;
@@ -173,20 +183,20 @@ function readStoredNumber(key, fallback) {
 }
 
 function getIconScale() {
-  return readStoredNumber('georgeos-icon-scale', 1);
+  return readStoredNumber('icon-scale', 1);
 }
 
 function getTextScale() {
-  return readStoredNumber('georgeos-text-scale', 1);
+  return readStoredNumber('text-scale', 1);
 }
 
 function applyIconScale(scale) {
   const clamped = Math.min(1.75, Math.max(0.5, scale));
   document.documentElement.style.setProperty('--georgeos-icon-size', `${Math.round(ICON_SIZE_BASE * clamped)}px`);
-  try {
-    localStorage.setItem('georgeos-icon-scale', String(clamped));
-  } catch {
-    // storage unavailable; keep in-memory value
+  if (activeProfileId !== 'guest') {
+    try {
+      localStorage.setItem(profileKey('icon-scale'), String(clamped));
+    } catch {}
   }
   return clamped;
 }
@@ -194,10 +204,10 @@ function applyIconScale(scale) {
 function applyTextScale(scale) {
   const clamped = Math.min(1.5, Math.max(0.8, scale));
   document.documentElement.style.fontSize = `${TEXT_SIZE_BASE * clamped}px`;
-  try {
-    localStorage.setItem('georgeos-text-scale', String(clamped));
-  } catch {
-    // storage unavailable; keep in-memory value
+  if (activeProfileId !== 'guest') {
+    try {
+      localStorage.setItem(profileKey('text-scale'), String(clamped));
+    } catch {}
   }
   return clamped;
 }
@@ -230,7 +240,6 @@ function saveProfiles() {
 }
 
 let profiles = loadProfiles();
-let activeProfileId = null;
 
 function createProfile(name, avatar, password) {
   const id = 'profile-' + Date.now();
@@ -595,7 +604,51 @@ function unlockDesktop() {
   soundEngine.ensureContext();
   soundEngine.play('tap');
   setTimeout(() => soundEngine.play('unlock'), 60);
+  loadProfileSettings();
   showDesktop();
+}
+
+function loadProfileSettings() {
+  if (!activeProfileId) return;
+
+  if (activeProfileId === 'guest') {
+    document.documentElement.dataset.theme = 'macos';
+    document.documentElement.dataset.mode = 'dark';
+    applyIconScale(1);
+    applyTextScale(1);
+    document.querySelectorAll('.theme-option').forEach((button) => {
+      button.classList.toggle('active', button.dataset.theme === 'macos');
+    });
+    document.querySelectorAll('.mode-toggle').forEach((button) => {
+      button.classList.toggle('active', button.dataset.mode === 'dark');
+    });
+    refreshTaskbarOrder();
+    desktopShortcuts.refresh();
+    return;
+  }
+
+  const savedTheme = localStorage.getItem(profileKey('theme'));
+  if (savedTheme && themeOptions.some((t) => t.id === savedTheme)) {
+    document.documentElement.dataset.theme = savedTheme;
+  }
+
+  const savedMode = localStorage.getItem(profileKey('mode'));
+  if (savedMode === 'light' || savedMode === 'dark') {
+    document.documentElement.dataset.mode = savedMode;
+  }
+
+  applyIconScale(readStoredNumber('icon-scale', 1));
+  applyTextScale(readStoredNumber('text-scale', 1));
+
+  document.querySelectorAll('.theme-option').forEach((button) => {
+    button.classList.toggle('active', button.dataset.theme === document.documentElement.dataset.theme);
+  });
+  document.querySelectorAll('.mode-toggle').forEach((button) => {
+    button.classList.toggle('active', button.dataset.mode === document.documentElement.dataset.mode);
+  });
+
+  refreshTaskbarOrder();
+  desktopShortcuts.refresh();
 }
 
 loginSubmitBtn.addEventListener('click', () => {
@@ -690,6 +743,7 @@ const desktopShortcuts = {
   has() {
     return false;
   },
+  refresh() {},
 };
 
 const suppressClickAfterDrag = (event) => {
@@ -717,7 +771,7 @@ function setupTaskbarReorder() {
 
   function readStoredOrder() {
     try {
-      const stored = JSON.parse(localStorage.getItem('georgeos-taskbar-order') || '[]');
+      const stored = JSON.parse(localStorage.getItem(profileKey('taskbar-order')) || '[]');
       return Array.isArray(stored) ? stored : [];
     } catch {
       return [];
@@ -725,9 +779,10 @@ function setupTaskbarReorder() {
   }
 
   function persistOrder() {
+    if (activeProfileId === 'guest') return;
     const order = [...taskbar.querySelectorAll('.taskbar-app')].map((button) => button.dataset.app);
     try {
-      localStorage.setItem('georgeos-taskbar-order', JSON.stringify(order));
+      localStorage.setItem(profileKey('taskbar-order'), JSON.stringify(order));
     } catch {
       // storage unavailable; order is session-only
     }
@@ -807,7 +862,7 @@ function setupTaskbarReorder() {
     event.preventDefault();
   }
 
-  currentApps().forEach((button) => {
+    currentApps().forEach((button) => {
     button.addEventListener('pointerdown', (event) => {
       if (dragButton) {
         return;
@@ -826,6 +881,24 @@ function setupTaskbarReorder() {
   });
 }
 
+function refreshTaskbarOrder() {
+  const taskbar = document.querySelector('.taskbar');
+  if (!taskbar) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem(profileKey('taskbar-order')) || '[]');
+    if (!Array.isArray(stored) || !stored.length) return;
+    const known = new Set([...taskbar.querySelectorAll('.taskbar-app')].map((b) => b.dataset.app));
+    const order = stored.filter((app) => known.has(app));
+    taskbar.querySelectorAll('.taskbar-app').forEach((button) => {
+      if (!order.includes(button.dataset.app)) order.push(button.dataset.app);
+    });
+    order.forEach((app) => {
+      const button = taskbar.querySelector(`.taskbar-app[data-app="${app}"]`);
+      if (button) taskbar.append(button);
+    });
+  } catch {}
+}
+
 function setupDesktopIcons() {
   const screen = desktopView.querySelector('.screen');
   const container = document.createElement('div');
@@ -840,7 +913,7 @@ function setupDesktopIcons() {
 
   function readDesktopApps() {
     try {
-      const stored = JSON.parse(localStorage.getItem('georgeos-desktop-apps') || '[]');
+      const stored = JSON.parse(localStorage.getItem(profileKey('desktop-apps')) || '[]');
       return Array.isArray(stored) ? stored : [];
     } catch {
       return [];
@@ -848,9 +921,10 @@ function setupDesktopIcons() {
   }
 
   function persistDesktopApps() {
+    if (activeProfileId === 'guest') return;
     const apps = [...container.querySelectorAll('.desktop-icon')].map((icon) => icon.dataset.app);
     try {
-      localStorage.setItem('georgeos-desktop-apps', JSON.stringify(apps));
+      localStorage.setItem(profileKey('desktop-apps'), JSON.stringify(apps));
     } catch {
       // storage unavailable; layout is session-only
     }
@@ -858,7 +932,7 @@ function setupDesktopIcons() {
 
   function readStoredPositions() {
     try {
-      const stored = JSON.parse(localStorage.getItem('georgeos-desktop-icon-positions') || '{}');
+      const stored = JSON.parse(localStorage.getItem(profileKey('desktop-icon-positions')) || '{}');
       return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
     } catch {
       return {};
@@ -866,6 +940,7 @@ function setupDesktopIcons() {
   }
 
   function persistIconPositions() {
+    if (activeProfileId === 'guest') return;
     const positions = {};
     container.querySelectorAll('.desktop-icon').forEach((icon) => {
       positions[icon.dataset.app] = {
@@ -874,7 +949,7 @@ function setupDesktopIcons() {
       };
     });
     try {
-      localStorage.setItem('georgeos-desktop-icon-positions', JSON.stringify(positions));
+      localStorage.setItem(profileKey('desktop-icon-positions'), JSON.stringify(positions));
     } catch {
       // storage unavailable; positions are session-only
     }
@@ -1018,6 +1093,23 @@ function setupDesktopIcons() {
   desktopShortcuts.add = addToDesktop;
   desktopShortcuts.remove = removeFromDesktop;
   desktopShortcuts.has = (appId) => Boolean(container.querySelector(`.desktop-icon[data-app="${appId}"]`));
+  desktopShortcuts.refresh = () => {
+    container.textContent = '';
+    const storedPositions = readStoredPositions();
+    readDesktopApps().forEach((appId, index) => {
+      const icon = buildIcon(appId);
+      bindIconDrag(icon);
+      container.append(icon);
+      const fallback = defaultSlot(index);
+      const storedX = Number(storedPositions[appId]?.x);
+      const storedY = Number(storedPositions[appId]?.y);
+      applyIconPosition(
+        icon,
+        Number.isFinite(storedX) ? storedX : fallback.x,
+        Number.isFinite(storedY) ? storedY : fallback.y,
+      );
+    });
+  };
 
   const storedPositions = readStoredPositions();
   readDesktopApps().forEach((appId, index) => {
